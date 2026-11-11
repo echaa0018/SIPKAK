@@ -3,6 +3,10 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   plugins: [react()],
-  server: { port: 5173 },
+  server: {
+    port: 5173,
+    // In development the backend runs separately on port 3001.
+    proxy: { '/api': 'http://localhost:3001' },
+  },
   test: { environment: 'jsdom' },
 });

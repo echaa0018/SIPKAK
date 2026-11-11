@@ -2,6 +2,7 @@ node_modules/
 dist/
 coverage/
 .vercel/
+.claude/
 .env
 .env.*
 !.env.example

@@ -17,3 +17,10 @@
   color: var(--muted);
   font-size: 15px;
 }
+
+.status {
+  margin: 0;
+  padding: 12px 16px;
+  color: var(--muted);
+  font-size: 14px;
+}
