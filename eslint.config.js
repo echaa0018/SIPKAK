@@ -9,6 +9,12 @@ export default defineConfig([
   js.configs.recommended,
   tseslint.configs.recommended,
   {
+    rules: {
+      // Allow intentionally unused parameters such as `_req` or Express's `_next`.
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    },
+  },
+  {
     // Root config files, the backend and its scripts run on Node.
     files: ['*.js', 'backend/**/*.{ts,js,mjs}'],
     languageOptions: { globals: globals.node },
