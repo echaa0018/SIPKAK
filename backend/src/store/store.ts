@@ -24,9 +24,14 @@ export interface StoredReport {
   history: StatusChange[];
 }
 
+export interface ReportFilter {
+  status?: ReportStatus;
+  reporterId?: string;
+}
+
 // Every method is async so the memory store and the Supabase store share one interface.
 export interface Store {
-  /** All reports, newest first. */
-  listReports(): Promise<StoredReport[]>;
+  /** Reports matching the filter (all of them without one), newest first. */
+  listReports(filter?: ReportFilter): Promise<StoredReport[]>;
   getReport(id: number): Promise<StoredReport | undefined>;
 }

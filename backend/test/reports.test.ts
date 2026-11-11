@@ -39,6 +39,66 @@ describe('GET /api/reports', () => {
   });
 });
 
+describe('GET /api/reports filters', () => {
+  const ids = (res: request.Response) => res.body.reports.map((r: { id: number }) => r.id);
+
+  it('filters by status', async () => {
+    expect(ids(await request(app).get('/api/reports?status=done'))).toEqual([127, 120]);
+    expect(ids(await request(app).get('/api/reports?status=waiting'))).toEqual([145, 144, 139, 98]);
+    expect(ids(await request(app).get('/api/reports?status=in_progress'))).toEqual([142, 133]);
+  });
+
+  it('keeps only your own reports with mine=true', async () => {
+    const res = await request(app)
+      .get('/api/reports?mine=true')
+      .set('X-Reporter-Id', demoReporterId);
+
+    expect(res.status).toBe(200);
+    expect(ids(res)).toEqual([142, 127, 98]);
+    expect(JSON.stringify(res.body)).not.toContain('reporterId');
+  });
+
+  it('combines mine and status', async () => {
+    const res = await request(app)
+      .get('/api/reports?mine=true&status=done')
+      .set('X-Reporter-Id', demoReporterId);
+
+    expect(ids(res)).toEqual([127]);
+  });
+
+  it('returns nothing with mine=true for a reporter who has sent nothing', async () => {
+    const res = await request(app)
+      .get('/api/reports?mine=true')
+      .set('X-Reporter-Id', '11111111-1111-4111-8111-111111111111');
+
+    expect(ids(res)).toEqual([]);
+  });
+
+  it('lists everything with mine=false', async () => {
+    expect(ids(await request(app).get('/api/reports?mine=false'))).toHaveLength(8);
+  });
+
+  it('needs the X-Reporter-Id header for mine=true', async () => {
+    const res = await request(app).get('/api/reports?mine=true');
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatchObject({
+      code: 'VALIDATION_ERROR',
+      details: { 'X-Reporter-Id': 'Required' },
+    });
+  });
+
+  it('rejects an unknown status', async () => {
+    const res = await request(app).get('/api/reports?status=fixed');
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatchObject({
+      code: 'VALIDATION_ERROR',
+      details: { status: expect.any(String) },
+    });
+  });
+});
+
 describe('GET /api/reports/:id', () => {
   it('returns one report', async () => {
     const res = await request(app).get('/api/reports/142');

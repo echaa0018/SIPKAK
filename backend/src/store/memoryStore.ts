@@ -11,8 +11,13 @@ export function createMemoryStore(initial: StoredReport[] = seedReports): Store 
   const reports = structuredClone(initial);
 
   return {
-    async listReports() {
-      return structuredClone([...reports].sort(newestFirst));
+    async listReports({ status, reporterId } = {}) {
+      const matching = reports.filter(
+        (r) =>
+          (status === undefined || r.status === status) &&
+          (reporterId === undefined || r.reporterId === reporterId),
+      );
+      return structuredClone(matching.sort(newestFirst));
     },
 
     async getReport(id) {
