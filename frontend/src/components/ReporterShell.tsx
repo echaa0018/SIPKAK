@@ -1,6 +1,8 @@
 import { useLocation, useNavigate, useSearchParams } from 'react-router';
+import type { Notification } from '../api/notifications';
 import type { Report } from '../api/reports';
 import { useIsDesktop } from '../lib/useIsDesktop';
+import { useNotifications } from '../lib/useNotifications';
 import { useReports } from '../lib/useReports';
 import { DesktopLayout } from './DesktopLayout';
 import { PhoneLayout } from './PhoneLayout';
@@ -28,6 +30,10 @@ export interface LayoutProps {
   onCloseSelected: () => void;
   /** Fetch the reports again after a change (a +1, a new report). */
   reload: () => void;
+  notifications: Notification[];
+  unread: number;
+  /** Marks the notification read and opens its report. */
+  onOpenNotification: (notification: Notification) => void;
 }
 
 /** The reporter app: the phone layout below 900 px, the three-pane desktop layout above. */
@@ -51,6 +57,12 @@ export function ReporterShell() {
   };
   const onCloseSelected = () => navigate({ pathname, search: '' });
 
+  const { notifications, unread, markRead } = useNotifications();
+  const onOpenNotification = (notification: Notification) => {
+    markRead(notification.id);
+    onSelect(notification.reportId);
+  };
+
   const Layout = isDesktop ? DesktopLayout : PhoneLayout;
   return (
     <Layout
@@ -62,6 +74,9 @@ export function ReporterShell() {
       onSelect={onSelect}
       onCloseSelected={onCloseSelected}
       reload={reload}
+      notifications={notifications}
+      unread={unread}
+      onOpenNotification={onOpenNotification}
     />
   );
 }

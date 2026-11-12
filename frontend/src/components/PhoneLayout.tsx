@@ -7,6 +7,7 @@ import { BottomNav } from './BottomNav';
 import { MapView } from './MapView';
 import { MyReportsList } from './MyReportsList';
 import { NewReportForm } from './NewReportForm';
+import { NotificationList } from './NotificationList';
 import styles from './PhoneLayout.module.css';
 import type { LayoutProps, ReporterView } from './ReporterShell';
 import { ReportList } from './ReportList';
@@ -26,6 +27,7 @@ const plural = (n: number) => (n === 1 ? '1 report' : `${n} reports`);
 /** Phone layout: a top bar, one screen, and the bottom nav. */
 export function PhoneLayout(props: LayoutProps) {
   const { view, reports, loading, loadError, selected, onSelect, onCloseSelected, reload } = props;
+  const { notifications, unread, onOpenNotification } = props;
   const title = titles[view];
   // The form's pin starts in the middle of campus; drag the map or use your location to move it.
   const [pin, setPin] = useState<LatLng | null>({ lat: campusCenter[0], lng: campusCenter[1] });
@@ -57,7 +59,7 @@ export function PhoneLayout(props: LayoutProps) {
 
       {loadError && (
         <p className={styles.error} role="alert">
-          Couldn’t load the reports. Check your connection and reload the page.
+          Couldn’t load the reports. Trying again…
         </p>
       )}
 
@@ -97,14 +99,19 @@ export function PhoneLayout(props: LayoutProps) {
             onConfirmed={reload}
           />
         )}
-        {/* Temporary placeholders: the following steps fill in these screens. */}
         {view === 'mine' && (
           <MyReportsList reports={reports} loading={loading} onSelect={onSelect} variant="phone" />
         )}
-        {view === 'notifications' && <p className={styles.placeholder}>Your notifications</p>}
+        {view === 'notifications' && (
+          <NotificationList
+            notifications={notifications}
+            onOpen={onOpenNotification}
+            variant="phone"
+          />
+        )}
       </main>
 
-      <BottomNav view={view} />
+      <BottomNav view={view} unread={unread} />
 
       {sent && (
         <ReportSentDialog

@@ -1,4 +1,6 @@
+import type { Notification } from '../api/notifications';
 import type { Report } from '../api/reports';
+import { statusLabels } from './status';
 
 /** The report number as shown in the UI: 142 → "#0142". */
 export function reportNumber(id: number): string {
@@ -15,6 +17,13 @@ export function formatPlace({ building, floor }: Pick<Report, 'building' | 'floo
       ? floor
       : `${floor} floor`;
   return `${building} · ${floorText}`;
+}
+
+/** "Your report is now In progress", "Your report is Done", or "Admin added a note…". */
+export function notificationTitle({ kind, status }: Pick<Notification, 'kind' | 'status'>): string {
+  if (kind === 'note' || !status) return 'Admin added a note to your report';
+  if (status === 'done') return 'Your report is Done';
+  return `Your report is now ${statusLabels[status].long}`;
 }
 
 /** "3 others confirmed this", "1 other confirmed this", or nothing yet. */

@@ -81,9 +81,3 @@
   color: var(--warning);
   font-size: 14px;
 }
-
-.placeholder {
-  margin: 0;
-  padding: 16px;
-  color: var(--muted);
-}

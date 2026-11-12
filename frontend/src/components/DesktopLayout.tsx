@@ -7,10 +7,12 @@ import { PlusIcon } from './icons';
 import { MapView } from './MapView';
 import { MyReportsList } from './MyReportsList';
 import { NewReportForm } from './NewReportForm';
+import { NotificationList } from './NotificationList';
 import type { LayoutProps } from './ReporterShell';
 import { ReportDetail } from './ReportDetail';
 import { ReportList } from './ReportList';
 import { ReportSentDialog } from './ReportSentDialog';
+import { notificationsLabel, UnreadBadge } from './UnreadBadge';
 
 const tabs = [
   { to: '/', label: 'All reports', view: 'all' },
@@ -23,6 +25,7 @@ const plural = (n: number) => (n === 1 ? '1 report' : `${n} reports`);
 /** Desktop layout: a header, then three panes (list tabs, map, details) split by thin lines. */
 export function DesktopLayout(props: LayoutProps) {
   const { view, reports, loading, loadError, selected, onSelect, onCloseSelected, reload } = props;
+  const { notifications, unread, onOpenNotification } = props;
   // The left pane shows My reports or Notifications on those URLs, and all reports otherwise
   // (on /list and /report/new too).
   const leftTab = view === 'mine' || view === 'notifications' ? view : 'all';
@@ -53,8 +56,10 @@ export function DesktopLayout(props: LayoutProps) {
                 to={tab.to}
                 className={styles.tab}
                 aria-current={tab.view === leftTab ? 'page' : undefined}
+                aria-label={tab.view === 'notifications' ? notificationsLabel(unread) : undefined}
               >
                 {tab.label}
+                {tab.view === 'notifications' && <UnreadBadge count={unread} />}
               </Link>
             ))}
           </nav>
@@ -68,7 +73,6 @@ export function DesktopLayout(props: LayoutProps) {
               variant="desktop"
             />
           )}
-          {/* Temporary placeholders: the following steps fill in these tabs. */}
           {leftTab === 'mine' && (
             <MyReportsList
               reports={reports}
@@ -78,13 +82,19 @@ export function DesktopLayout(props: LayoutProps) {
               variant="desktop"
             />
           )}
-          {leftTab === 'notifications' && <p className={styles.placeholder}>Your notifications</p>}
+          {leftTab === 'notifications' && (
+            <NotificationList
+              notifications={notifications}
+              onOpen={onOpenNotification}
+              variant="desktop"
+            />
+          )}
         </aside>
 
         <section className={styles.center} aria-label="Map">
           {loadError && (
             <p className={styles.error} role="alert">
-              Couldn’t load the reports. Check your connection and reload the page.
+              Couldn’t load the reports. Trying again…
             </p>
           )}
           <MapView
@@ -114,7 +124,7 @@ export function DesktopLayout(props: LayoutProps) {
           ) : selected ? (
             <ReportDetail report={selected} onClose={onCloseSelected} onConfirmed={reload} />
           ) : (
-            <p className={styles.placeholder}>Select a report on the map or in the list.</p>
+            <p className={styles.emptyHint}>Select a report on the map or in the list.</p>
           )}
         </aside>
       </div>

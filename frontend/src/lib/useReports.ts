@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { listReports, type Report } from '../api/reports';
 
+// After a failed load, try again this much later (e.g. the API was still starting up).
+export const RETRY_MS = 3_000;
+
 /** All reports, newest first. Call `reload()` after a change to fetch them again. */
 export function useReports() {
   const [reports, setReports] = useState<Report[]>([]);
@@ -11,6 +14,7 @@ export function useReports() {
 
   useEffect(() => {
     let current = true; // ignore an answer that arrives after a newer request started
+    let retry: ReturnType<typeof setTimeout> | undefined;
     listReports().then(
       (list) => {
         if (!current) return;
@@ -22,10 +26,12 @@ export function useReports() {
         if (!current) return;
         setError(true);
         setLoading(false);
+        retry = setTimeout(() => setVersion((v) => v + 1), RETRY_MS);
       },
     );
     return () => {
       current = false;
+      clearTimeout(retry);
     };
   }, [version]);
 

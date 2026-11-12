@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { confirmationsText, formatPlace, reportNumber } from './reportText';
+import { confirmationsText, formatPlace, notificationTitle, reportNumber } from './reportText';
 
 describe('reportNumber', () => {
   it('pads the id to four digits', () => {
@@ -27,6 +27,21 @@ describe('formatPlace', () => {
   it('shows only the building without a floor', () => {
     expect(formatPlace({ building: 'Main gate (Jl. Ganesha)', floor: null })).toBe(
       'Main gate (Jl. Ganesha)',
+    );
+  });
+});
+
+describe('notificationTitle', () => {
+  it('says what changed', () => {
+    expect(notificationTitle({ kind: 'status', status: 'in_progress' })).toBe(
+      'Your report is now In progress',
+    );
+    expect(notificationTitle({ kind: 'status', status: 'done' })).toBe('Your report is Done');
+    expect(notificationTitle({ kind: 'status', status: 'waiting' })).toBe(
+      'Your report is now Waiting for review',
+    );
+    expect(notificationTitle({ kind: 'note', status: null })).toBe(
+      'Admin added a note to your report',
     );
   });
 });

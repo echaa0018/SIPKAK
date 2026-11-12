@@ -36,11 +36,25 @@ const reports = [
   makeReport({ id: 142, isMine: true }),
 ];
 
-beforeEach(() => {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(async () => Response.json({ reports: reports.slice(1) })),
+/**
+ * A fake API. `/api/notifications` answers with no notifications; everything else goes to
+ * `handler` (by default: the report list).
+ */
+function stubApi(
+  handler: (url: string, init?: RequestInit) => Response = () =>
+    Response.json({ reports: reports.slice(1) }),
+) {
+  const fetchMock = vi.fn(async (url: string, init?: RequestInit) =>
+    url.startsWith('/api/notifications')
+      ? Response.json({ notifications: [], unread: 0 })
+      : handler(url, init),
   );
+  vi.stubGlobal('fetch', fetchMock);
+  return fetchMock;
+}
+
+beforeEach(() => {
+  stubApi();
 });
 
 afterEach(() => {
@@ -143,7 +157,34 @@ describe('map', () => {
     setDesktop(true);
     renderAt('/');
 
-    expect((await screen.findByRole('alert')).textContent).toContain('Couldn’t load the reports');
+    expect((await screen.findByRole('alert')).textContent).toBe(
+      'Couldn’t load the reports. Trying again…',
+    );
+  });
+
+  it('tries again by itself, e.g. when the API was still starting', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      // The first request fails like ECONNREFUSED through the proxy; the next one works.
+      let calls = 0;
+      stubApi(() =>
+        ++calls === 1
+          ? Response.json({ error: { code: 'INTERNAL' } }, { status: 500 })
+          : Response.json({ reports }),
+      );
+      setDesktop(true);
+      renderAt('/');
+
+      expect(await screen.findByRole('alert')).toBeTruthy();
+      await vi.advanceTimersByTimeAsync(3_000);
+
+      expect(
+        await screen.findByRole('button', { name: 'Lamp by the east stairs is out, In progress' }),
+      ).toBeTruthy();
+      expect(screen.queryByRole('alert')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('is where unknown paths end up', async () => {
@@ -155,11 +196,7 @@ describe('map', () => {
 });
 
 describe('selecting a report', () => {
-  const useTwoReports = () =>
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => Response.json({ reports })),
-    );
+  const useTwoReports = () => stubApi(() => Response.json({ reports }));
 
   it('opens the sheet from a marker on the phone and puts the id in the URL', async () => {
     useTwoReports();
@@ -245,22 +282,19 @@ describe('sending a report', () => {
   /** A fake API where the list gains the new report once it is posted. */
   function fakeApi() {
     let list = [...reports];
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async (url: string, init?: RequestInit) => {
-        if (url === '/api/buildings') {
-          return Response.json({
-            buildings: [{ name: 'Aula Barat', lat: -6.89246, lng: 107.609824 }],
-          });
-        }
-        if (url.startsWith('/api/reports/nearby')) return Response.json({ reports: [] });
-        if (url === '/api/reports' && init?.method === 'POST') {
-          list = [created, ...list];
-          return Response.json(created, { status: 201 });
-        }
-        return Response.json({ reports: list });
-      }),
-    );
+    stubApi((url, init) => {
+      if (url === '/api/buildings') {
+        return Response.json({
+          buildings: [{ name: 'Aula Barat', lat: -6.89246, lng: 107.609824 }],
+        });
+      }
+      if (url.startsWith('/api/reports/nearby')) return Response.json({ reports: [] });
+      if (url === '/api/reports' && init?.method === 'POST') {
+        list = [created, ...list];
+        return Response.json(created, { status: 201 });
+      }
+      return Response.json({ reports: list });
+    });
   }
 
   async function fillAndSend() {
@@ -331,5 +365,115 @@ describe('sending a report', () => {
 
     expect(currentUrl()).toBe('/?report=146');
     expect(await screen.findByRole('article', { name: 'Report #0146' })).toBeTruthy();
+  });
+});
+
+describe('notifications', () => {
+  const unreadStatus = {
+    id: 4,
+    reportId: 142,
+    reportDescription: 'Lamp by the east stairs is out',
+    kind: 'status',
+    status: 'in_progress',
+    note: 'Technician scheduled for 12/11/2026.',
+    read: false,
+    createdAt: '2026-11-11T04:20:00Z',
+  };
+  const unreadNote = {
+    ...unreadStatus,
+    id: 3,
+    reportId: 98,
+    reportDescription: 'Tap leaking in the men’s toilet',
+    kind: 'note',
+    status: null,
+    note: 'Passed to the CC Timur building manager.',
+    createdAt: '2026-11-10T07:05:00Z',
+  };
+  const readOne = { ...unreadStatus, id: 1, status: 'done', note: null, read: true };
+
+  /** The API with 2 unread notifications; marking one read is recorded. */
+  function fakeApi() {
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === '/api/notifications') {
+        return Response.json({ notifications: [unreadStatus, unreadNote, readOne], unread: 2 });
+      }
+      if (url === '/api/notifications/read') return Response.json({ unread: 1 });
+      void init;
+      return Response.json({ reports });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    return fetchMock;
+  }
+
+  it('shows the unread count on the phone bottom nav', async () => {
+    fakeApi();
+    setDesktop(false);
+    renderAt('/');
+
+    const nav = screen.getByRole('navigation', { name: 'Main' });
+    expect(await within(nav).findByRole('link', { name: 'Notifications, 2 unread' })).toBeTruthy();
+  });
+
+  it('lists notifications with unread ones tinted and marked', async () => {
+    fakeApi();
+    setDesktop(false);
+    renderAt('/notifications');
+
+    const first = await screen.findByRole('button', { name: /Your report is now In progress/ });
+    expect(first.textContent).toContain('#0142 · Lamp by the east stairs is out');
+    expect(first.textContent).toContain('Note: Technician scheduled for 12/11/2026.');
+    expect(first.textContent).toContain('11/11/2026 · 11:20 WIB');
+    expect(first.textContent).toContain('(unread)');
+    expect(first.className).toContain('unread');
+    expect(screen.getByRole('button', { name: /Admin added a note to your report/ })).toBeTruthy();
+  });
+
+  it('opening one marks it read, opens its report and lowers the badge', async () => {
+    const fetchMock = fakeApi();
+    setDesktop(false);
+    renderAt('/notifications');
+
+    fireEvent.click(await screen.findByRole('button', { name: /Your report is now In progress/ }));
+
+    expect(currentUrl()).toBe('/?report=142');
+    const nav = screen.getByRole('navigation', { name: 'Main' });
+    expect(within(nav).getByRole('link', { name: 'Notifications, 1 unread' })).toBeTruthy();
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/notifications/read',
+      expect.objectContaining({ method: 'POST', body: '{"ids":[4]}' }),
+    );
+  });
+
+  it('keeps the Notifications tab on desktop and shows the count there', async () => {
+    fakeApi();
+    setDesktop(true);
+    renderAt('/notifications');
+
+    expect(screen.getByText('Updates on reports you sent')).toBeTruthy();
+    const tabs = screen.getByRole('navigation', { name: 'Lists' });
+    expect(await within(tabs).findByRole('link', { name: 'Notifications, 2 unread' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /Admin added a note/ }));
+
+    expect(currentUrl()).toBe('/notifications?report=98');
+    expect(within(tabs).getByRole('link', { name: 'Notifications, 1 unread' })).toBeTruthy();
+  });
+
+  it('asks again every 15 seconds and when the window gets focus', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const fetchMock = fakeApi();
+      setDesktop(false);
+      renderAt('/');
+      const polls = () => fetchMock.mock.calls.filter(([url]) => url === '/api/notifications');
+
+      await waitFor(() => expect(polls()).toHaveLength(1));
+      await vi.advanceTimersByTimeAsync(15_000);
+      expect(polls()).toHaveLength(2);
+      window.dispatchEvent(new Event('focus'));
+      expect(polls()).toHaveLength(3);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
