@@ -5,6 +5,11 @@
   background: var(--surface);
 }
 
+/* The admin nav has two items. */
+.two {
+  grid-template-columns: repeat(2, 1fr);
+}
+
 .item {
   position: relative;
   display: flex;

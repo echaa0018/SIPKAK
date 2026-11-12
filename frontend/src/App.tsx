@@ -18,6 +18,8 @@ export default function App() {
       </Route>
 
       <Route path="admin/login" element={<AdminLoginPage />} />
+      {/* Like the reporter shell, AdminPage stays mounted and reads the path itself:
+          /admin (map), /admin/reports (phone list) and /admin/reports/:id (phone detail). */}
       <Route
         path="admin"
         element={
@@ -25,7 +27,11 @@ export default function App() {
             <AdminPage />
           </RequireAdmin>
         }
-      />
+      >
+        <Route index />
+        <Route path="reports" />
+        <Route path="reports/:id" />
+      </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

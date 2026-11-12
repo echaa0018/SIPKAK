@@ -68,6 +68,19 @@ export const CameraIcon = (props: IconProps) => (
   </Icon>
 );
 
+export const ListIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M9 6h11M9 12h11M9 18h11" />
+    <path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01" strokeWidth="2.6" />
+  </Icon>
+);
+
+export const BackIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M15 5l-7 7 7 7" />
+  </Icon>
+);
+
 export const SignOutIcon = (props: IconProps) => (
   <Icon {...props}>
     <path d="M14 4h5v16h-5" />

@@ -20,11 +20,13 @@ interface AdminReportDetailProps {
   onSaved: () => void;
   /** The token was refused (e.g. the backend's ADMIN_TOKEN changed): sign in again. */
   onUnauthorized: () => void;
+  /** The phone page leaves out the pin coordinates, as in its wireframe. */
+  showPin?: boolean;
 }
 
 /** One report for the facilities team: its details, then the status, a note and "Save". */
 export function AdminReportDetail(props: AdminReportDetailProps) {
-  const { report, token, onClose, onSaved, onUnauthorized } = props;
+  const { report, token, onClose, onSaved, onUnauthorized, showPin = true } = props;
   const id = useId();
   const [status, setStatus] = useState<ReportStatus>(report.status);
   const [note, setNote] = useState('');
@@ -100,10 +102,14 @@ export function AdminReportDetail(props: AdminReportDetailProps) {
             ? 'No one else'
             : `${report.confirmations} ${report.confirmations === 1 ? 'other' : 'others'}`}
         </dd>
-        <dt>Pin</dt>
-        <dd>
-          {formatCoords(report)} · ±{report.accuracyM} m
-        </dd>
+        {showPin && (
+          <>
+            <dt>Pin</dt>
+            <dd>
+              {formatCoords(report)} · ±{report.accuracyM} m
+            </dd>
+          </>
+        )}
       </dl>
 
       <form className={styles.form} onSubmit={save} noValidate>

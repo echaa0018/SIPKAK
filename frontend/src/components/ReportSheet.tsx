@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import type { Report } from '../api/reports';
 import { formatWib } from '../lib/formatWib';
 import { confirmationsText, formatPlace, reportNumber } from '../lib/reportText';
@@ -11,11 +12,14 @@ import { StatusLabel } from './StatusLabel';
 interface ReportSheetProps {
   report: Report;
   onClose: () => void;
-  onConfirmed: () => void;
+  /** Reporter: after a +1, reload the count. */
+  onConfirmed?: () => void;
+  /** Admin: where "Update status" goes. The sheet then shows that button instead of +1. */
+  updateHref?: string;
 }
 
 /** The selected report on the phone: a sheet over the bottom of the map. */
-export function ReportSheet({ report, onClose, onConfirmed }: ReportSheetProps) {
+export function ReportSheet({ report, onClose, onConfirmed, updateHref }: ReportSheetProps) {
   return (
     <article className={styles.sheet} aria-label={`Report ${reportNumber(report.id)}`}>
       <div className={styles.handle} aria-hidden="true" />
@@ -32,15 +36,29 @@ export function ReportSheet({ report, onClose, onConfirmed }: ReportSheetProps) 
         </button>
       </div>
 
-      <div className={styles.status}>
-        <div>
+      {updateHref ? (
+        <div className={styles.status}>
           <StatusLabel status={report.status} long />
-          <p className={styles.muted}>{confirmationsText(report.confirmations)}</p>
+          <Link to={updateHref} className={styles.primary}>
+            Update status
+          </Link>
         </div>
-        <ConfirmButton key={report.id} report={report} onConfirmed={onConfirmed} />
-      </div>
-
-      <FacilitiesNote note={report.note} />
+      ) : (
+        <>
+          <div className={styles.status}>
+            <div>
+              <StatusLabel status={report.status} long />
+              <p className={styles.muted}>{confirmationsText(report.confirmations)}</p>
+            </div>
+            <ConfirmButton
+              key={report.id}
+              report={report}
+              onConfirmed={onConfirmed ?? (() => {})}
+            />
+          </div>
+          <FacilitiesNote note={report.note} />
+        </>
+      )}
     </article>
   );
 }

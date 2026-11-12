@@ -114,8 +114,29 @@
 }
 
 .main {
+  position: relative; /* the phone's report sheet sits at its bottom */
   flex: 1;
   min-height: 0;
+  overflow-y: auto;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: -12px;
+}
+
+/* The phone list: the filter stays put; the rows scroll. */
+.phoneList {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.phoneList > section {
+  flex: 1;
+  height: auto;
 }
 
 .hint {

@@ -75,3 +75,17 @@
 .status .muted {
   margin-top: 4px;
 }
+
+/* "Update status" (admin): ink-filled */
+.primary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: var(--radius-lg);
+  background: var(--ink);
+  color: var(--surface);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+}
