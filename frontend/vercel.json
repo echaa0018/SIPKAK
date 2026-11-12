@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://REPLACE-WITH-YOUR-BACKEND.vercel.app/api/$1"
+      "destination": "https://sipkak-backend-alpha.vercel.app/api/$1"
     },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
