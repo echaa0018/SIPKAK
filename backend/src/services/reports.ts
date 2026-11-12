@@ -6,7 +6,7 @@ import type { ReportStatus, Store, StoredReport } from '../store/store.js';
 // Measured on the data URL string the client sends.
 export const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 
-// SIMULATED: there is no real GPS, so every report gets this accuracy unless the client sends one.
+// Used when the client sends no accuracy, e.g. a pin placed by hand on the map.
 const SIMULATED_ACCURACY_M = 12;
 
 // The report shape the API sends: the stored report without reporterId, plus isMine.
