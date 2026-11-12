@@ -1,3 +1,4 @@
+import type { ReportCategory } from '../lib/categories';
 import { request } from './client';
 
 export type ReportStatus = 'waiting' | 'in_progress' | 'done';
@@ -5,12 +6,13 @@ export type ReportStatus = 'waiting' | 'in_progress' | 'done';
 export interface Report {
   id: number;
   description: string;
+  category: ReportCategory;
   building: string;
   floor: string | null;
   lat: number;
   lng: number;
   accuracyM: number;
-  /** A JPEG data URL, or null. */
+  /** A JPEG data URL, or null (only old demo reports have none). */
   photo: string | null;
   status: ReportStatus;
   /** The latest note from facilities. */
@@ -35,12 +37,14 @@ export interface Building {
 
 export interface NewReport {
   description: string;
+  category: ReportCategory;
   building: string;
   floor?: string | null;
   lat: number;
   lng: number;
   accuracyM?: number;
-  photo?: string | null;
+  /** Required: a JPEG data URL from resizeImage(). */
+  photo: string;
 }
 
 export async function listReports(filter: { status?: ReportStatus; mine?: boolean } = {}) {

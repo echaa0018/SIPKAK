@@ -2,6 +2,7 @@ import { useEffect, useId, useState, type FormEvent } from 'react';
 import { ApiError } from '../api/client';
 import { createReport, listBuildings, type Building, type Report } from '../api/reports';
 import { isInsideCampus, simulatedPosition } from '../lib/campusMap';
+import { categories, type ReportCategory } from '../lib/categories';
 import { distanceM, formatCoords, type LatLng } from '../lib/geo';
 import { resizeImage } from '../lib/resizeImage';
 import { useNearbyReport } from '../lib/useNearbyReport';
@@ -10,7 +11,7 @@ import { CameraIcon, CloseIcon, CrosshairIcon } from './icons';
 import styles from './NewReportForm.module.css';
 import { PinPicker } from './PinPicker';
 
-type Field = 'location' | 'photo' | 'building' | 'floor' | 'description';
+type Field = 'location' | 'photo' | 'category' | 'building' | 'floor' | 'description';
 type Errors = Partial<Record<Field | 'form', string>>;
 
 interface NewReportFormProps {
@@ -65,10 +66,11 @@ function errorsFromApi(error: unknown): Errors {
       form: error.code === 'NETWORK' ? error.message : 'Couldn’t send the report. Try again.',
     };
   }
-  const { lat, lng, description, building, floor, photo } = error.details;
+  const { lat, lng, description, category, building, floor, photo } = error.details;
   return {
     location: lat || lng ? 'This spot is outside the campus map.' : undefined,
     description,
+    category,
     building,
     floor,
     photo,
@@ -85,6 +87,7 @@ export function NewReportForm(props: NewReportFormProps) {
   const [buildingsFailed, setBuildingsFailed] = useState(false);
   // Until you pick a building yourself, the form suggests the one nearest the pin.
   const [chosenBuilding, setChosenBuilding] = useState<string | null>(null);
+  const [category, setCategory] = useState<ReportCategory | ''>('');
   const [floor, setFloor] = useState('');
   const [description, setDescription] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
@@ -172,17 +175,20 @@ export function NewReportForm(props: NewReportFormProps) {
     event.preventDefault();
     const problems: Errors = {};
     if (!pin) problems.location = 'Click the map to place your pin, or use your location.';
+    if (!photo) problems.photo = 'Add a photo of the damage.';
+    if (!category) problems.category = 'Choose a category.';
     if (!building) problems.building = 'Choose a building.';
     if (description.trim().length < 5) {
       problems.description = 'Tell us what’s wrong (at least 5 characters).';
     }
     setErrors(problems);
-    if (Object.keys(problems).length > 0 || !pin) return;
+    if (Object.keys(problems).length > 0 || !pin || !photo || !category) return;
 
     setSending(true);
     try {
       const report = await createReport({
         description: description.trim(),
+        category,
         building,
         floor: floor.trim() || null,
         lat: pin.lat,
@@ -192,6 +198,7 @@ export function NewReportForm(props: NewReportFormProps) {
         photo,
       });
       setChosenBuilding(null);
+      setCategory('');
       setFloor('');
       setDescription('');
       setPhoto(null);
@@ -331,6 +338,27 @@ export function NewReportForm(props: NewReportFormProps) {
           </label>
         )}
         {errorText('photo')}
+      </div>
+
+      <div className={styles.field}>
+        <label className={styles.label} htmlFor={`${id}-category`}>
+          Category
+        </label>
+        <select
+          id={`${id}-category`}
+          className={styles.input}
+          value={category}
+          onChange={(event) => setCategory(event.target.value as ReportCategory | '')}
+          {...errorProps('category')}
+        >
+          <option value="">Choose…</option>
+          {categories.map((c) => (
+            <option key={c.code} value={c.code}>
+              {c.label}
+            </option>
+          ))}
+        </select>
+        {errorText('category')}
       </div>
 
       <div className={styles.row}>

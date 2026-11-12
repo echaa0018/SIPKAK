@@ -1,7 +1,7 @@
 import { AppError } from '../lib/errors.js';
 import { distanceM, type Point } from '../lib/geo.js';
 import type { CreateReportInput, UpdateReportInput } from '../lib/validation.js';
-import type { ReportStatus, Store, StoredReport } from '../store/store.js';
+import type { ReportCategory, ReportStatus, Store, StoredReport } from '../store/store.js';
 
 // Measured on the data URL string the client sends.
 export const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
@@ -20,7 +20,11 @@ export function createReportService(store: Store) {
   return {
     /** `mine` keeps only the viewer's own reports, so it needs a viewer. */
     async list(
-      { status, mine }: { status?: ReportStatus; mine?: boolean },
+      {
+        status,
+        category,
+        mine,
+      }: { status?: ReportStatus; category?: ReportCategory; mine?: boolean },
       viewerId?: string,
     ): Promise<Report[]> {
       if (mine && !viewerId) {
@@ -28,7 +32,11 @@ export function createReportService(store: Store) {
           'X-Reporter-Id': 'Required',
         });
       }
-      const reports = await store.listReports({ status, reporterId: mine ? viewerId : undefined });
+      const reports = await store.listReports({
+        status,
+        category,
+        reporterId: mine ? viewerId : undefined,
+      });
       return reports.map((report) => toApiReport(report, viewerId));
     },
 

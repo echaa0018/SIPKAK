@@ -70,6 +70,14 @@ async function renderForm(onSent = vi.fn()) {
 
 const buildingSelect = () => screen.getByLabelText('Building') as HTMLSelectElement;
 
+/** Picks a category and a photo, the two fields every report needs besides the text. */
+async function addCategoryAndPhoto(category = 'other') {
+  fireEvent.change(screen.getByLabelText('Category'), { target: { value: category } });
+  const file = new File(['fake'], 'crack.jpg', { type: 'image/jpeg' });
+  fireEvent.change(screen.getByLabelText('Photo'), { target: { files: [file] } });
+  await screen.findByRole('img', { name: 'Preview of your photo' });
+}
+
 // "Use my location" finds you 26 m from the lamp report, ±12 m.
 const atAulaBarat = { lat: -6.89258, lng: 107.61015, accuracy: 12 };
 
@@ -175,6 +183,8 @@ describe('validation', () => {
 
     expect(screen.getByText('Click the map to place your pin, or use your location.')).toBeTruthy();
     expect(screen.getByText('Choose a building.')).toBeTruthy();
+    expect(screen.getByText('Choose a category.')).toBeTruthy();
+    expect(screen.getByText('Add a photo of the damage.')).toBeTruthy();
     const description = screen.getByLabelText("What's wrong?");
     expect(description.getAttribute('aria-invalid')).toBe('true');
     expect(
@@ -199,6 +209,7 @@ describe('validation', () => {
     await renderForm();
 
     fireEvent.click(screen.getByRole('button', { name: 'Use my location' }));
+    await addCategoryAndPhoto();
     fireEvent.change(screen.getByLabelText("What's wrong?"), {
       target: { value: 'Broken window' },
     });
@@ -228,6 +239,7 @@ describe('sending', () => {
     const { onSent } = await renderForm();
 
     fireEvent.click(screen.getByRole('button', { name: 'Use my location' }));
+    await addCategoryAndPhoto('lighting');
     fireEvent.change(screen.getByLabelText('Floor'), { target: { value: ' 1 ' } });
     fireEvent.change(screen.getByLabelText("What's wrong?"), {
       target: { value: '  Broken window in the stairwell ' },
@@ -238,13 +250,16 @@ describe('sending', () => {
     const post = fetchMock.mock.calls.find(([url, init]) => url === '/api/reports' && init?.method);
     expect(JSON.parse(post![1].body)).toEqual({
       description: 'Broken window in the stairwell',
+      category: 'lighting',
       building: 'Aula Barat',
       floor: '1',
       lat: -6.89258,
       lng: 107.61015,
       accuracyM: 12,
-      photo: null,
+      photo: 'data:image/jpeg;base64,RESIZED',
     });
+    // The form is empty again for the next report.
+    expect((screen.getByLabelText('Category') as HTMLSelectElement).value).toBe('');
     // The form is empty again for the next report.
     expect((screen.getByLabelText("What's wrong?") as HTMLTextAreaElement).value).toBe('');
   });

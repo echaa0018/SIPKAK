@@ -18,7 +18,15 @@ const seed: [number, string, ReportStatus][] = [
 ];
 const reports = seed.map(([id, description, status], i) =>
   // Spread them out a little so each has its own spot on the map.
-  makeReport({ id, description, status, lat: -6.89 - i * 0.0003, lng: 107.61 }),
+  makeReport({
+    id,
+    description,
+    status,
+    // Two of them are toilet reports, for the category filter.
+    category: description.includes('tap') || description.includes('Tap') ? 'toilets' : 'lighting',
+    lat: -6.89 - i * 0.0003,
+    lng: 107.61,
+  }),
 );
 
 function Location() {
@@ -74,6 +82,21 @@ describe('admin dashboard', () => {
         .map((b) => b.textContent),
     ).toEqual(['All 8', 'Waiting 4', 'In progress 2', 'Done 2']);
     expect(rows()).toHaveLength(8);
+  });
+
+  it('narrows the list, the map and the status counts to one category', async () => {
+    const container = renderAdmin();
+    await within(list()).findByText('Cracked paving by the main gate');
+
+    fireEvent.change(screen.getByLabelText('Category'), { target: { value: 'toilets' } });
+
+    expect(rows().map((r) => within(r).getAllByText(/./)[0].textContent)).toEqual([
+      'Leaking tap in the 2nd-floor toilet',
+      'Tap leaking in the men’s toilet',
+    ]);
+    expect(markers(container)).toHaveLength(2);
+    const filter = screen.getByRole('group', { name: 'Show reports' });
+    expect(within(filter).getAllByRole('button')[0].textContent).toBe('All 2');
   });
 
   it('shows the report number on each row', async () => {

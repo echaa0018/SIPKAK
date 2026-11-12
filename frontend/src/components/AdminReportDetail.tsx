@@ -4,6 +4,7 @@ import { ApiError } from '../api/client';
 import type { Report, ReportStatus } from '../api/reports';
 import { formatWib } from '../lib/formatWib';
 import { formatCoords } from '../lib/geo';
+import { categoryLabels } from '../lib/categories';
 import { formatPlace, reportNumber } from '../lib/reportText';
 import { statuses, statusLabels } from '../lib/status';
 import styles from './AdminReportDetail.module.css';
@@ -90,6 +91,7 @@ export function AdminReportDetail(props: AdminReportDetailProps) {
 
       <div>
         <h2 className={styles.title}>{report.description}</h2>
+        <p className={styles.muted}>{categoryLabels[report.category]}</p>
         <p className={styles.muted}>{formatPlace(report)}</p>
       </div>
 

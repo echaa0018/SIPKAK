@@ -150,3 +150,27 @@ describe('GET /api/buildings', () => {
     });
   });
 });
+
+describe('GET /api/categories', () => {
+  it('lists the damage categories', async () => {
+    const res = await request(createApp()).get('/api/categories');
+
+    expect(res.status).toBe(200);
+    expect(res.body.categories.map((c: { code: string }) => c.code)).toEqual([
+      'lighting',
+      'paths',
+      'toilets',
+      'classroom',
+      'accessibility',
+      'other',
+    ]);
+  });
+
+  it('filters reports by category', async () => {
+    const res = await request(createApp()).get('/api/reports?category=toilets');
+
+    expect(res.body.reports.map((r: { id: number }) => r.id)).toEqual([144, 98]);
+    const bad = await request(createApp()).get('/api/reports?category=graffiti');
+    expect(bad.status).toBe(400);
+  });
+});

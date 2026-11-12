@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import type { Report } from '../api/reports';
 import { formatWib } from '../lib/formatWib';
+import { categoryLabels } from '../lib/categories';
 import { confirmationsText, formatPlace, reportNumber } from '../lib/reportText';
 import { ConfirmButton } from './ConfirmButton';
 import { FacilitiesNote } from './FacilitiesNote';
@@ -28,6 +29,7 @@ export function ReportSheet({ report, onClose, onConfirmed, updateHref }: Report
         <ReportPhoto report={report} size="thumb" />
         <div className={styles.text}>
           <h2 className={styles.title}>{report.description}</h2>
+          <p className={styles.muted}>{categoryLabels[report.category]}</p>
           <p className={styles.muted}>{formatPlace(report)}</p>
           <p className={styles.muted}>{formatWib(report.createdAt)}</p>
         </div>

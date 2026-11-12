@@ -37,6 +37,7 @@ function newReport(overrides: Partial<StoredReport> = {}): Omit<StoredReport, 'i
   const now = new Date().toISOString();
   return {
     description: 'Contract test: broken window',
+    category: 'other',
     building: 'Aula Barat',
     floor: '1',
     lat: -6.89258,
@@ -112,6 +113,11 @@ for (const { name, skip, create, cleanUp } of stores) {
       const done = await store.listReports({ status: 'done' });
       expect(done.every((r) => r.status === 'done')).toBe(true);
       expect(done.map((r) => r.id)).not.toContain(created.id);
+
+      const lighting = await store.listReports({ category: 'lighting' });
+      expect(lighting.length).toBeGreaterThan(0);
+      expect(lighting.every((r) => r.category === 'lighting')).toBe(true);
+      expect(lighting.map((r) => r.id)).not.toContain(created.id);
     });
 
     it('counts a +1 once per reporter', async () => {

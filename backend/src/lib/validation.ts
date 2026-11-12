@@ -1,15 +1,19 @@
 import { z } from 'zod';
 import { buildings } from '../data/buildings.js';
+import { categoryCodes } from '../data/categories.js';
 import { mapBounds } from '../data/mapBounds.js';
 import { AppError } from './errors.js';
 
 export const reportStatus = z.enum(['waiting', 'in_progress', 'done']);
 
+export const reportCategory = z.enum(categoryCodes, { error: 'Choose a category' });
+
 export const reportIdParams = z.object({ id: z.coerce.number().int().positive() });
 
-// GET /api/reports?status=&mine=true
+// GET /api/reports?status=&category=&mine=true
 export const listReportsQuery = z.object({
   status: reportStatus.optional(),
+  category: reportCategory.optional(),
   mine: z
     .enum(['true', 'false'])
     .optional()
@@ -32,6 +36,7 @@ export const createReportBody = z.object({
     .trim()
     .min(5, 'Too short')
     .max(280, 'At most 280 characters'),
+  category: reportCategory,
   building: z
     .string({ error: 'Required' })
     .refine((name) => buildingNames.has(name), 'Unknown building'),
@@ -50,11 +55,10 @@ export const createReportBody = z.object({
     .min(mapBounds.west, 'Outside campus')
     .max(mapBounds.east, 'Outside campus'),
   accuracyM: z.number().positive().optional(),
+  // The photo is the evidence of the damage, so it is required (KF-02).
   photo: z
-    .string()
-    .startsWith('data:image/jpeg;base64,', 'Must be a JPEG data URL')
-    .nullish()
-    .transform((photo) => photo ?? null),
+    .string({ error: 'Add a photo' })
+    .startsWith('data:image/jpeg;base64,', 'Must be a JPEG data URL'),
 });
 
 export type CreateReportInput = z.infer<typeof createReportBody>;

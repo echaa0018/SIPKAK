@@ -10,6 +10,7 @@ export const seedReports: StoredReport[] = [
   {
     id: 145,
     description: 'Cracked paving by the main gate',
+    category: 'paths',
     building: 'Main gate (Jl. Ganesha)',
     floor: null,
     lat: -6.893057,
@@ -32,6 +33,7 @@ export const seedReports: StoredReport[] = [
   {
     id: 144,
     description: 'Leaking tap in the 2nd-floor toilet',
+    category: 'toilets',
     building: 'Labtek VIII',
     floor: '2',
     lat: -6.890579,
@@ -54,6 +56,7 @@ export const seedReports: StoredReport[] = [
   {
     id: 142,
     description: 'Lamp by the east stairs is out',
+    category: 'lighting',
     building: 'Aula Barat',
     floor: '1',
     lat: -6.892614,
@@ -80,6 +83,7 @@ export const seedReports: StoredReport[] = [
   {
     id: 139,
     description: 'Projector won’t turn on',
+    category: 'classroom',
     building: 'GKU Timur',
     floor: '2',
     lat: -6.890389,
@@ -102,6 +106,7 @@ export const seedReports: StoredReport[] = [
   {
     id: 133,
     description: 'Loose handrail on the ramp',
+    category: 'accessibility',
     building: 'Labtek XI',
     floor: 'Ground',
     lat: -6.889484,
@@ -128,6 +133,7 @@ export const seedReports: StoredReport[] = [
   {
     id: 127,
     description: 'Broken chair, third row',
+    category: 'classroom',
     building: 'Labtek V',
     floor: '2',
     lat: -6.890588,
@@ -158,6 +164,7 @@ export const seedReports: StoredReport[] = [
   {
     id: 120,
     description: 'Flickering lights in the reading room',
+    category: 'lighting',
     building: 'Perpustakaan Pusat',
     floor: '3',
     lat: -6.888273,
@@ -188,6 +195,7 @@ export const seedReports: StoredReport[] = [
   {
     id: 98,
     description: 'Tap leaking in the men’s toilet',
+    category: 'toilets',
     building: 'CC Timur',
     floor: '1',
     lat: -6.891239,

@@ -1,5 +1,6 @@
 import { createClient, type PostgrestError } from '@supabase/supabase-js';
 import type {
+  ReportCategory,
   ReportFilter,
   ReportStatus,
   StatusChange,
@@ -12,6 +13,7 @@ import type {
 interface ReportRow {
   id: number;
   description: string;
+  category: ReportCategory;
   building: string;
   floor: string | null;
   lat: number;
@@ -48,6 +50,7 @@ function toReport(row: ReportRow): StoredReport {
   return {
     id: row.id,
     description: row.description,
+    category: row.category,
     building: row.building,
     floor: row.floor,
     lat: row.lat,
@@ -107,13 +110,14 @@ export function createSupabaseStore(url: string, secretKey: string): Store {
   return {
     kind: 'supabase',
 
-    async listReports({ status, reporterId }: ReportFilter = {}) {
+    async listReports({ status, category, reporterId }: ReportFilter = {}) {
       let query = db
         .from('reports')
         .select(REPORT_COLUMNS)
         .order('created_at', { ascending: false })
         .order('id', { ascending: false });
       if (status) query = query.eq('status', status);
+      if (category) query = query.eq('category', category);
       if (reporterId) query = query.eq('reporter_id', reporterId);
       return (check(await query) as ReportRow[]).map(toReport);
     },
@@ -126,6 +130,7 @@ export function createSupabaseStore(url: string, secretKey: string): Store {
           .from('reports')
           .insert({
             description: report.description,
+            category: report.category,
             building: report.building,
             floor: report.floor,
             lat: report.lat,

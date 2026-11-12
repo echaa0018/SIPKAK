@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import type { Report } from '../api/reports';
+import { categoryLabels } from '../lib/categories';
 import { formatWib } from '../lib/formatWib';
 import { formatPlace, reportNumber } from '../lib/reportText';
 import styles from './ReportList.module.css';
@@ -70,6 +71,7 @@ export function ReportList({
                   <span className={styles.title}>{report.description}</span>
                   {showNumber && <span className={styles.muted}>{reportNumber(report.id)}</span>}
                 </span>
+                <span className={styles.muted}>{categoryLabels[report.category]}</span>
                 <span className={styles.muted}>{formatPlace(report)}</span>
                 {historyRows ? (
                   <>

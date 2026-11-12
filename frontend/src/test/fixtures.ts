@@ -36,6 +36,7 @@ export function makeReport(overrides: Partial<Report> = {}): Report {
   return {
     id: 142,
     description: 'Lamp by the east stairs is out',
+    category: 'lighting',
     building: 'Aula Barat',
     floor: '1',
     lat: -6.892614,

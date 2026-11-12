@@ -132,9 +132,11 @@ describe('notifications from admin updates', () => {
   it('notifies the owner of a newly sent report, and no one else', async () => {
     const created = await request(app).post('/api/reports').set('X-Reporter-Id', newReporter).send({
       description: 'Broken window in the stairwell',
+      category: 'other',
       building: 'Aula Barat',
       lat: -6.89258,
       lng: 107.61015,
+      photo: 'data:image/jpeg;base64,AAAA',
     });
     await adminPatch(created.body.id, { status: 'in_progress' });
 

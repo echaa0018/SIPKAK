@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { buildings } from '../data/buildings.js';
+import { categories } from '../data/categories.js';
 import type { Store } from '../store/store.js';
 
 export function metaRouter(storeKind: Store['kind']) {
@@ -11,6 +12,10 @@ export function metaRouter(storeKind: Store['kind']) {
 
   router.get('/buildings', (_req, res) => {
     res.json({ buildings });
+  });
+
+  router.get('/categories', (_req, res) => {
+    res.json({ categories });
   });
 
   return router;

@@ -20,10 +20,11 @@ export function createMemoryStore(): Store {
   return {
     kind: 'memory',
 
-    async listReports({ status, reporterId } = {}) {
+    async listReports({ status, category, reporterId } = {}) {
       const matching = reports.filter(
         (r) =>
           (status === undefined || r.status === status) &&
+          (category === undefined || r.category === category) &&
           (reporterId === undefined || r.reporterId === reporterId),
       );
       return structuredClone(matching.sort(newestFirst));

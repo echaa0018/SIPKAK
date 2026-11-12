@@ -104,9 +104,11 @@ describe('endpoint helpers', () => {
     fetchMock.mockResolvedValue(Response.json({ id: 146 }, { status: 201 }));
     const report = {
       description: 'Broken window',
+      category: 'other' as const,
       building: 'Aula Barat',
       lat: -6.89,
       lng: 107.61,
+      photo: 'data:image/jpeg;base64,AAAA',
     };
 
     expect(await createReport(report)).toEqual({ id: 146 });

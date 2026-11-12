@@ -1,3 +1,6 @@
+import type { ReportCategory } from '../data/categories.js';
+
+export type { ReportCategory };
 export type ReportStatus = 'waiting' | 'in_progress' | 'done';
 
 export interface StatusChange {
@@ -9,6 +12,7 @@ export interface StatusChange {
 export interface StoredReport {
   id: number;
   description: string;
+  category: ReportCategory;
   building: string;
   floor: string | null;
   lat: number;
@@ -39,6 +43,7 @@ export interface StoredNotification {
 
 export interface ReportFilter {
   status?: ReportStatus;
+  category?: ReportCategory;
   reporterId?: string;
 }
 

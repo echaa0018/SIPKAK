@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLocation, useMatch, useNavigate, useSearchParams } from 'react-router';
 import { AdminBottomNav } from '../components/AdminBottomNav';
 import { AdminReportDetail } from '../components/AdminReportDetail';
+import { CategoryFilter, type CategoryFilterValue } from '../components/CategoryFilter';
 import { BackIcon, SignOutIcon } from '../components/icons';
 import { MapView } from '../components/MapView';
 import { ReportList } from '../components/ReportList';
@@ -29,6 +30,7 @@ export function AdminPage() {
   // RequireAdmin only shows this page when there is a token.
   const token = getAdminToken() ?? '';
   const [filter, setFilter] = useState<StatusFilterValue>('all');
+  const [category, setCategory] = useState<CategoryFilterValue>('all');
   const [searchParams, setSearchParams] = useSearchParams();
 
   const detailMatch = useMatch('/admin/reports/:id');
@@ -41,8 +43,9 @@ export function AdminPage() {
   const selected = reports.find((r) => r.id === selectedId);
   const from: From = (location.state as { from?: From } | null)?.from ?? 'map';
 
-  // The filter applies to both the list and the map pins.
-  const shown = filter === 'all' ? reports : reports.filter((r) => r.status === filter);
+  // Both filters apply to the list and the map pins. The status counts follow the category.
+  const inCategory = category === 'all' ? reports : reports.filter((r) => r.category === category);
+  const shown = filter === 'all' ? inCategory : inCategory.filter((r) => r.status === filter);
 
   function signOut() {
     clearAdminToken();
@@ -95,7 +98,8 @@ export function AdminPage() {
               <h1 className={styles.heading}>Reports</h1>
               <span className={styles.muted}>Newest first</span>
             </div>
-            <StatusFilter reports={reports} value={filter} onChange={setFilter} />
+            <CategoryFilter value={category} onChange={setCategory} />
+            <StatusFilter reports={inCategory} value={filter} onChange={setFilter} />
             <ReportList
               reports={shown}
               loading={loading}
@@ -103,7 +107,7 @@ export function AdminPage() {
               selectedId={selected?.id}
               variant="desktop"
               kind="admin"
-              empty="No reports with this status."
+              empty="No reports match these filters."
             />
           </aside>
 
@@ -180,7 +184,8 @@ export function AdminPage() {
 
         {phoneView === 'list' && (
           <div className={styles.phoneList}>
-            <StatusFilter reports={reports} value={filter} onChange={setFilter} />
+            <CategoryFilter value={category} onChange={setCategory} />
+            <StatusFilter reports={inCategory} value={filter} onChange={setFilter} />
             <ReportList
               reports={shown}
               loading={loading}
@@ -189,7 +194,7 @@ export function AdminPage() {
               }
               variant="phone"
               kind="admin"
-              empty="No reports with this status."
+              empty="No reports match these filters."
             />
           </div>
         )}

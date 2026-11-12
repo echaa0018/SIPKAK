@@ -1,4 +1,5 @@
 import type { Report, ReportStatus } from '../api/reports';
+import { categoryLabels } from '../lib/categories';
 import { formatWib } from '../lib/formatWib';
 import { confirmationsText, formatPlace, reportNumber } from '../lib/reportText';
 import { ConfirmButton } from './ConfirmButton';
@@ -48,6 +49,7 @@ export function ReportDetail({ report, onClose, onConfirmed }: ReportDetailProps
 
       <div>
         <h2 className={styles.title}>{report.description}</h2>
+        <p className={styles.place}>{categoryLabels[report.category]}</p>
         <p className={styles.place}>{formatPlace(report)}</p>
       </div>
 
