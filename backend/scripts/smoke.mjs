@@ -76,6 +76,7 @@ await check('POST /api/reports creates a report', async () => {
       building: 'Aula Barat',
       lat: -6.89258,
       lng: 107.61015,
+      photo: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==',
     },
   });
   created = res.body;

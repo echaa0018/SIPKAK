@@ -70,6 +70,13 @@ async function renderForm(onSent = vi.fn()) {
 
 const buildingSelect = () => screen.getByLabelText('Building') as HTMLSelectElement;
 
+/** Adds a photo, which every report needs as evidence. */
+async function addPhoto() {
+  const file = new File(['fake'], 'crack.jpg', { type: 'image/jpeg' });
+  fireEvent.change(screen.getByLabelText('Photo'), { target: { files: [file] } });
+  await screen.findByRole('img', { name: 'Preview of your photo' });
+}
+
 // "Use my location" finds you 26 m from the lamp report, ±12 m.
 const atAulaBarat = { lat: -6.89258, lng: 107.61015, accuracy: 12 };
 
@@ -174,6 +181,7 @@ describe('validation', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send report' }));
 
     expect(screen.getByText('Click the map to place your pin, or use your location.')).toBeTruthy();
+    expect(screen.getByText('Add a photo of the damage.')).toBeTruthy();
     expect(screen.getByText('Choose a building.')).toBeTruthy();
     const description = screen.getByLabelText("What's wrong?");
     expect(description.getAttribute('aria-invalid')).toBe('true');
@@ -199,6 +207,7 @@ describe('validation', () => {
     await renderForm();
 
     fireEvent.click(screen.getByRole('button', { name: 'Use my location' }));
+    await addPhoto();
     fireEvent.change(screen.getByLabelText("What's wrong?"), {
       target: { value: 'Broken window' },
     });
@@ -228,6 +237,7 @@ describe('sending', () => {
     const { onSent } = await renderForm();
 
     fireEvent.click(screen.getByRole('button', { name: 'Use my location' }));
+    await addPhoto();
     fireEvent.change(screen.getByLabelText('Floor'), { target: { value: ' 1 ' } });
     fireEvent.change(screen.getByLabelText("What's wrong?"), {
       target: { value: '  Broken window in the stairwell ' },
@@ -243,10 +253,11 @@ describe('sending', () => {
       lat: -6.89258,
       lng: 107.61015,
       accuracyM: 12,
-      photo: null,
+      photo: 'data:image/jpeg;base64,RESIZED',
     });
     // The form is empty again for the next report.
     expect((screen.getByLabelText("What's wrong?") as HTMLTextAreaElement).value).toBe('');
+    expect(screen.queryByRole('img', { name: 'Preview of your photo' })).toBeNull();
   });
 });
 

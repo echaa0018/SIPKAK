@@ -172,12 +172,13 @@ export function NewReportForm(props: NewReportFormProps) {
     event.preventDefault();
     const problems: Errors = {};
     if (!pin) problems.location = 'Click the map to place your pin, or use your location.';
+    if (!photo) problems.photo = 'Add a photo of the damage.';
     if (!building) problems.building = 'Choose a building.';
     if (description.trim().length < 5) {
       problems.description = 'Tell us what’s wrong (at least 5 characters).';
     }
     setErrors(problems);
-    if (Object.keys(problems).length > 0 || !pin) return;
+    if (Object.keys(problems).length > 0 || !pin || !photo) return;
 
     setSending(true);
     try {
