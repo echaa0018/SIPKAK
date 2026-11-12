@@ -36,4 +36,9 @@ export interface Store {
   getReport(id: number): Promise<StoredReport | undefined>;
   /** Saves a new report and gives it the next id. */
   createReport(report: Omit<StoredReport, 'id'>): Promise<StoredReport>;
+  /**
+   * Records a "+1" from this reporter and returns the report's new count,
+   * or undefined if this reporter has already confirmed it.
+   */
+  addConfirmation(reportId: number, reporterId: string): Promise<number | undefined>;
 }

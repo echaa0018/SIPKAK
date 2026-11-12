@@ -16,6 +16,13 @@ export const listReportsQuery = z.object({
     .transform((value) => value === 'true'),
 });
 
+// GET /api/reports/nearby?lat=&lng=&radius=30
+export const nearbyQuery = z.object({
+  lat: z.coerce.number({ error: 'Required' }),
+  lng: z.coerce.number({ error: 'Required' }),
+  radius: z.coerce.number().positive().max(100, 'At most 100 metres').default(30),
+});
+
 const buildingNames = new Set(buildings.map((b) => b.name));
 
 // POST /api/reports. The photo's 10 MB limit is checked in the service, because it is a 413.

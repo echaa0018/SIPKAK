@@ -10,6 +10,8 @@ export function createMemoryStore(initial: StoredReport[] = seedReports): Store 
   // Work on a copy, and hand out copies, so nobody can change the seed or the store by accident.
   const reports = structuredClone(initial);
   let nextId = Math.max(0, ...reports.map((r) => r.id)) + 1;
+  // Who confirmed what, as "reportId:reporterId". The seed only has counts, not names.
+  const confirmed = new Set<string>();
 
   return {
     async listReports({ status, reporterId } = {}) {
@@ -30,6 +32,14 @@ export function createMemoryStore(initial: StoredReport[] = seedReports): Store 
       const report = { ...structuredClone(input), id: nextId++ };
       reports.push(report);
       return structuredClone(report);
+    },
+
+    async addConfirmation(reportId, reporterId) {
+      const report = reports.find((r) => r.id === reportId);
+      const key = `${reportId}:${reporterId}`;
+      if (!report || confirmed.has(key)) return undefined;
+      confirmed.add(key);
+      return ++report.confirmations;
     },
   };
 }

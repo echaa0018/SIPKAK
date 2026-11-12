@@ -1,4 +1,5 @@
 import { AppError } from '../lib/errors.js';
+import { distanceM, type Point } from '../lib/geo.js';
 import type { CreateReportInput } from '../lib/validation.js';
 import type { ReportStatus, Store, StoredReport } from '../store/store.js';
 
@@ -60,6 +61,38 @@ export function createReportService(store: Store) {
         history: [{ status: 'waiting', at: now }],
       });
       return toApiReport(report, reporterId);
+    },
+
+    /** Open (not done) reports within `radius` metres of a point, nearest first. */
+    async nearby(
+      point: Point & { radius: number },
+      viewerId?: string,
+    ): Promise<(Report & { distanceM: number })[]> {
+      const reports = await store.listReports();
+      return reports
+        .filter((report) => report.status !== 'done')
+        .map((report) => ({ report, distance: distanceM(point, report) }))
+        .filter(({ distance }) => distance <= point.radius)
+        .sort((a, b) => a.distance - b.distance)
+        .map(({ report, distance }) => ({
+          ...toApiReport(report, viewerId),
+          distanceM: Math.round(distance),
+        }));
+    },
+
+    /** "Same problem (+1)". You can't confirm your own report, or confirm twice. */
+    async confirm(id: number, reporterId: string): Promise<{ confirmations: number }> {
+      const report = await store.getReport(id);
+      if (!report) throw new AppError('NOT_FOUND', `Report ${id} not found`);
+      if (report.reporterId === reporterId) {
+        throw new AppError('CONFLICT', 'You sent this report, so you cannot confirm it');
+      }
+
+      const confirmations = await store.addConfirmation(id, reporterId);
+      if (confirmations === undefined) {
+        throw new AppError('CONFLICT', 'You have already confirmed this report');
+      }
+      return { confirmations };
     },
   };
 }

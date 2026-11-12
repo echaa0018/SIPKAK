@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   createReportBody,
   listReportsQuery,
+  nearbyQuery,
   reportIdParams,
   requireReporterId,
 } from '../lib/validation.js';
@@ -16,6 +17,12 @@ export function reportsRouter(reports: ReportService) {
     res.json({ reports: await reports.list(query, req.get('X-Reporter-Id')) });
   });
 
+  // Must come before /reports/:id, or "nearby" would be read as an id.
+  router.get('/reports/nearby', async (req, res) => {
+    const query = nearbyQuery.parse(req.query);
+    res.json({ reports: await reports.nearby(query, req.get('X-Reporter-Id')) });
+  });
+
   router.get('/reports/:id', async (req, res) => {
     const { id } = reportIdParams.parse(req.params);
     res.json(await reports.get(id, req.get('X-Reporter-Id')));
@@ -25,6 +32,12 @@ export function reportsRouter(reports: ReportService) {
     const reporterId = requireReporterId(req.get('X-Reporter-Id'));
     const input = createReportBody.parse(req.body);
     res.status(201).json(await reports.create(input, reporterId));
+  });
+
+  router.post('/reports/:id/confirmations', async (req, res) => {
+    const reporterId = requireReporterId(req.get('X-Reporter-Id'));
+    const { id } = reportIdParams.parse(req.params);
+    res.json(await reports.confirm(id, reporterId));
   });
 
   return router;
