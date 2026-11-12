@@ -59,6 +59,29 @@ export const createReportBody = z.object({
 
 export type CreateReportInput = z.infer<typeof createReportBody>;
 
+// POST /api/admin/login
+export const loginBody = z.object({
+  password: z.string({ error: 'Required' }).min(1, 'Required'),
+});
+
+// PATCH /api/admin/reports/:id. An empty note counts as no note.
+export const updateReportBody = z
+  .object({
+    status: reportStatus.optional(),
+    note: z
+      .string()
+      .trim()
+      .max(500, 'At most 500 characters')
+      .optional()
+      .transform((note) => note || undefined),
+  })
+  .refine((body) => body.status !== undefined || body.note !== undefined, {
+    message: 'Send a status, a note or both',
+    path: ['status'],
+  });
+
+export type UpdateReportInput = z.infer<typeof updateReportBody>;
+
 /** Reads the X-Reporter-Id header where it is required. */
 export function requireReporterId(value: string | undefined): string {
   if (!z.uuid().safeParse(value).success) {

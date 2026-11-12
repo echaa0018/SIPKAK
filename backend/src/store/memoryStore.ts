@@ -41,5 +41,17 @@ export function createMemoryStore(initial: StoredReport[] = seedReports): Store 
       confirmed.add(key);
       return ++report.confirmations;
     },
+
+    async updateReport(id, { status, note, at }) {
+      const report = reports.find((r) => r.id === id);
+      if (!report) return undefined;
+      if (status !== undefined) {
+        report.status = status;
+        report.history.push({ status, at });
+      }
+      if (note !== undefined) report.note = note;
+      report.updatedAt = at;
+      return structuredClone(report);
+    },
   };
 }

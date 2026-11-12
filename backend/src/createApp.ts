@@ -1,5 +1,6 @@
 import express from 'express';
 import { errorHandler, notFound } from './lib/errors.js';
+import { adminRouter } from './routes/admin.js';
 import { metaRouter } from './routes/meta.js';
 import { reportsRouter } from './routes/reports.js';
 import { createReportService } from './services/reports.js';
@@ -15,6 +16,7 @@ export function createApp(store: Store = createMemoryStore()) {
   app.use(express.json({ limit: '11mb' }));
   app.use('/api', metaRouter);
   app.use('/api', reportsRouter(reports));
+  app.use('/api', adminRouter(reports));
 
   app.use(notFound);
   app.use(errorHandler);

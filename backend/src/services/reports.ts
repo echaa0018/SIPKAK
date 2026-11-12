@@ -1,6 +1,6 @@
 import { AppError } from '../lib/errors.js';
 import { distanceM, type Point } from '../lib/geo.js';
-import type { CreateReportInput } from '../lib/validation.js';
+import type { CreateReportInput, UpdateReportInput } from '../lib/validation.js';
 import type { ReportStatus, Store, StoredReport } from '../store/store.js';
 
 // Measured on the data URL string the client sends.
@@ -93,6 +93,26 @@ export function createReportService(store: Store) {
         throw new AppError('CONFLICT', 'You have already confirmed this report');
       }
       return { confirmations };
+    },
+
+    /** Admin update. Setting the status it already has, with no note, is rejected. */
+    async update(id: number, { status, note }: UpdateReportInput): Promise<Report> {
+      const report = await store.getReport(id);
+      if (!report) throw new AppError('NOT_FOUND', `Report ${id} not found`);
+
+      const statusChanged = status !== undefined && status !== report.status;
+      if (!statusChanged && note === undefined) {
+        throw new AppError('VALIDATION_ERROR', 'Nothing to change', {
+          status: `The report is already ${report.status}`,
+        });
+      }
+
+      const updated = await store.updateReport(id, {
+        status: statusChanged ? status : undefined,
+        note,
+        at: new Date().toISOString(),
+      });
+      return toApiReport(updated!);
     },
   };
 }

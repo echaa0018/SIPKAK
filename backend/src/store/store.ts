@@ -41,4 +41,12 @@ export interface Store {
    * or undefined if this reporter has already confirmed it.
    */
   addConfirmation(reportId: number, reporterId: string): Promise<number | undefined>;
+  /**
+   * Applies an admin update at time `at`: a `status` also appends to history,
+   * a `note` replaces the note. Returns undefined if there is no such report.
+   */
+  updateReport(
+    id: number,
+    update: { status?: ReportStatus; note?: string; at: string },
+  ): Promise<StoredReport | undefined>;
 }
