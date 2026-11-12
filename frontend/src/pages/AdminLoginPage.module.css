@@ -1,0 +1,91 @@
+.page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: 16px;
+  background: var(--surface-soft);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: 360px;
+  padding: 28px 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.brand {
+  margin: 0;
+  font-size: 18px;
+}
+
+.brand span {
+  margin-left: 4px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.input {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--muted);
+  border-radius: var(--radius-lg);
+  font: inherit;
+  font-size: 15px;
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--warning);
+}
+
+.error {
+  margin: 0;
+  color: var(--warning);
+  font-size: 13px;
+}
+
+/* Primary button: ink-filled */
+.primary {
+  min-height: 48px;
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--ink);
+  color: var(--surface);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.back {
+  align-self: center;
+  color: var(--muted);
+  font-size: 14px;
+}

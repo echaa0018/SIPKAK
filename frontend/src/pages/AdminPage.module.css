@@ -1,0 +1,70 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+  padding: 0 6px 0 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+@media (min-width: 900px) {
+  .header {
+    min-height: 56px;
+    padding: 0 20px;
+  }
+}
+
+.brand {
+  margin: 0;
+  font-size: 18px;
+}
+
+.brand span {
+  margin-left: 4px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.textButton {
+  min-height: 44px;
+  padding: 0 4px;
+  border: none;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Icon-only button with a 44 px target */
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.main {
+  flex: 1;
+  min-height: 0;
+}
+
+.placeholder {
+  margin: 0;
+  padding: 16px;
+  color: var(--muted);
+}

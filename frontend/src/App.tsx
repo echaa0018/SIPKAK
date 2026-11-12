@@ -1,5 +1,8 @@
 import { Navigate, Route, Routes } from 'react-router';
 import { ReporterShell } from './components/ReporterShell';
+import { RequireAdmin } from './components/RequireAdmin';
+import { AdminLoginPage } from './pages/AdminLoginPage';
+import { AdminPage } from './pages/AdminPage';
 
 export default function App() {
   return (
@@ -13,6 +16,17 @@ export default function App() {
         <Route path="mine" />
         <Route path="notifications" />
       </Route>
+
+      <Route path="admin/login" element={<AdminLoginPage />} />
+      <Route
+        path="admin"
+        element={
+          <RequireAdmin>
+            <AdminPage />
+          </RequireAdmin>
+        }
+      />
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
