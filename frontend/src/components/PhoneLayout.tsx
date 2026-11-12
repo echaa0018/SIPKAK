@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { NavLink } from 'react-router';
+import { NavLink, useNavigate } from 'react-router';
+import type { Report } from '../api/reports';
 import { campusCenter } from '../lib/campusMap';
 import type { LatLng } from '../lib/geo';
 import { BottomNav } from './BottomNav';
@@ -8,6 +9,7 @@ import { NewReportForm } from './NewReportForm';
 import styles from './PhoneLayout.module.css';
 import type { LayoutProps, ReporterView } from './ReporterShell';
 import { ReportList } from './ReportList';
+import { ReportSentDialog } from './ReportSentDialog';
 import { ReportSheet } from './ReportSheet';
 
 const titles: Record<ReporterView, string | null> = {
@@ -26,6 +28,9 @@ export function PhoneLayout(props: LayoutProps) {
   const title = titles[view];
   // The form's pin starts in the middle of campus; drag the map or use your location to move it.
   const [pin, setPin] = useState<LatLng | null>({ lat: campusCenter[0], lng: campusCenter[1] });
+  // The report you just sent, while the "Report sent" pop-up is open.
+  const [sent, setSent] = useState<Report | null>(null);
+  const navigate = useNavigate();
 
   return (
     <div className={styles.layout}>
@@ -85,8 +90,8 @@ export function PhoneLayout(props: LayoutProps) {
             onPinChange={setPin}
             reports={reports}
             onSent={(report) => {
-              reload();
-              onSelect(report.id);
+              reload(); // so the new marker is on the map behind the pop-up
+              setSent(report);
             }}
             onConfirmed={reload}
           />
@@ -97,6 +102,21 @@ export function PhoneLayout(props: LayoutProps) {
       </main>
 
       <BottomNav view={view} />
+
+      {sent && (
+        <ReportSentDialog
+          report={sent}
+          variant="phone"
+          onClose={() => {
+            setSent(null);
+            onSelect(sent.id); // back to the map, with the new report open
+          }}
+          onSeeMine={() => {
+            setSent(null);
+            navigate('/mine');
+          }}
+        />
+      )}
     </div>
   );
 }

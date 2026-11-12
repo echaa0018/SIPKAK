@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
@@ -227,5 +227,109 @@ describe('selecting a report', () => {
     renderAt('/?report=9999');
 
     expect(await screen.findByText('Select a report on the map or in the list.')).toBeTruthy();
+  });
+});
+
+describe('sending a report', () => {
+  const created = makeReport({
+    id: 146,
+    description: 'Broken window in the stairwell',
+    status: 'waiting',
+    note: null,
+    confirmations: 0,
+    isMine: true,
+    createdAt: '2026-11-11T04:32:00Z',
+    history: [{ status: 'waiting', at: '2026-11-11T04:32:00Z' }],
+  });
+
+  /** A fake API where the list gains the new report once it is posted. */
+  function fakeApi() {
+    let list = [...reports];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url === '/api/buildings') {
+          return Response.json({
+            buildings: [{ name: 'Aula Barat', lat: -6.89246, lng: 107.609824 }],
+          });
+        }
+        if (url.startsWith('/api/reports/nearby')) return Response.json({ reports: [] });
+        if (url === '/api/reports' && init?.method === 'POST') {
+          list = [created, ...list];
+          return Response.json(created, { status: 201 });
+        }
+        return Response.json({ reports: list });
+      }),
+    );
+  }
+
+  async function fillAndSend() {
+    fireEvent.click(await screen.findByRole('button', { name: 'Use my location' }));
+    await screen.findAllByRole('option', { name: 'Aula Barat' });
+    fireEvent.change(screen.getByLabelText("What's wrong?"), {
+      target: { value: 'Broken window in the stairwell' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Send report' }));
+    return screen.findByRole('dialog', { name: 'Report sent' });
+  }
+
+  it('shows "Report sent" with the number and time, and a new orange marker', async () => {
+    fakeApi();
+    setDesktop(true);
+    renderAt('/report/new');
+
+    const dialog = await fillAndSend();
+
+    expect(within(dialog).getByText('#0146 · 11/11/2026 · 11:32 WIB')).toBeTruthy();
+    // While the form is open the markers aren't buttons (clicks place your pin), so look them up
+    // by their label.
+    await waitFor(() =>
+      expect(
+        document.querySelector(
+          '[aria-label="Broken window in the stairwell, Waiting for review"] [class*="waiting"]',
+        ),
+      ).toBeTruthy(),
+    );
+  });
+
+  it('"Close" on desktop shows the new report in the right pane', async () => {
+    fakeApi();
+    setDesktop(true);
+    renderAt('/report/new');
+
+    const dialog = await fillAndSend();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+
+    expect(currentUrl()).toBe('/?report=146');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(
+      await within(screen.getByRole('complementary', { name: 'Details' })).findByText(
+        'Report #0146',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('"See it in My reports" on the phone opens My reports', async () => {
+    fakeApi();
+    setDesktop(false);
+    renderAt('/report/new');
+
+    const dialog = await fillAndSend();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'See it in My reports' }));
+
+    expect(currentUrl()).toBe('/mine');
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('"Back to map" on the phone opens the new report on the map', async () => {
+    fakeApi();
+    setDesktop(false);
+    renderAt('/report/new');
+
+    const dialog = await fillAndSend();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Back to map' }));
+
+    expect(currentUrl()).toBe('/?report=146');
+    expect(await screen.findByRole('article', { name: 'Report #0146' })).toBeTruthy();
   });
 });

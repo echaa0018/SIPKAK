@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
+import type { Report } from '../api/reports';
 import type { LatLng } from '../lib/geo';
 import styles from './DesktopLayout.module.css';
 import { PlusIcon } from './icons';
@@ -8,6 +9,7 @@ import { NewReportForm } from './NewReportForm';
 import type { LayoutProps } from './ReporterShell';
 import { ReportDetail } from './ReportDetail';
 import { ReportList } from './ReportList';
+import { ReportSentDialog } from './ReportSentDialog';
 
 const tabs = [
   { to: '/', label: 'All reports', view: 'all' },
@@ -26,6 +28,8 @@ export function DesktopLayout(props: LayoutProps) {
   const navigate = useNavigate();
   // The form's pin, placed on the big map. Starts empty: click the map or use your location.
   const [pin, setPin] = useState<LatLng | null>(null);
+  // The report you just sent, while the "Report sent" pop-up is open.
+  const [sent, setSent] = useState<Report | null>(null);
 
   return (
     <div className={styles.layout}>
@@ -92,8 +96,8 @@ export function DesktopLayout(props: LayoutProps) {
               reports={reports}
               onSent={(report) => {
                 setPin(null);
-                reload();
-                onSelect(report.id);
+                reload(); // so the new marker is on the map behind the pop-up
+                setSent(report);
               }}
               onConfirmed={reload}
               onClose={() => navigate('/')}
@@ -105,6 +109,21 @@ export function DesktopLayout(props: LayoutProps) {
           )}
         </aside>
       </div>
+
+      {sent && (
+        <ReportSentDialog
+          report={sent}
+          variant="desktop"
+          onClose={() => {
+            setSent(null);
+            onSelect(sent.id); // the right pane then shows the new report
+          }}
+          onSeeMine={() => {
+            setSent(null);
+            navigate(`/mine?report=${sent.id}`);
+          }}
+        />
+      )}
     </div>
   );
 }
