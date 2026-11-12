@@ -54,7 +54,3 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   }
   return data as T;
 }
-
-export function getHealth() {
-  return request<{ ok: boolean; store: string }>('/health');
-}

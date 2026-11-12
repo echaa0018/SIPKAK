@@ -1,0 +1,74 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 6px 0 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.brand {
+  margin: 0;
+  font-size: 18px;
+}
+
+.brand strong {
+  font-weight: 700;
+}
+
+.brand span {
+  margin-left: 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Map/List segmented switch */
+.switch {
+  display: flex;
+  border: 1px solid var(--muted);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.switchItem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  min-height: 40px;
+  padding: 0 12px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.switchItem[aria-current='page'] {
+  background: var(--ink);
+  color: var(--surface);
+}
+
+.main {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.placeholder {
+  margin: 0;
+  padding: 16px;
+  color: var(--muted);
+}

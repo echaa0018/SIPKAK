@@ -1,0 +1,101 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  margin: 0;
+  font-size: 18px;
+}
+
+.brand strong {
+  font-weight: 700;
+}
+
+.brand span {
+  margin-left: 6px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Primary button: ink-filled */
+.reportButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: var(--surface);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* Three full-height panes separated by 1 px lines */
+.panes {
+  display: grid;
+  grid-template-columns: 320px 1fr 360px;
+  flex: 1;
+  min-height: 0;
+}
+
+.left,
+.right {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.left {
+  border-right: 1px solid var(--line);
+}
+
+.right {
+  border-left: 1px solid var(--line);
+}
+
+.center {
+  position: relative;
+  min-width: 0;
+  background: var(--surface-soft);
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 8px;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-size: 15px;
+  text-decoration: none;
+}
+
+.tab[aria-current='page'] {
+  border-bottom-color: var(--ink);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.placeholder {
+  margin: 0;
+  padding: 20px;
+  color: var(--muted);
+}

@@ -1,35 +1,19 @@
-import { useEffect, useState } from 'react';
-import { getHealth } from './api/client';
-import styles from './App.module.css';
-
-type ApiState = 'checking' | 'connected' | 'offline';
+import { Navigate, Route, Routes } from 'react-router';
+import { ReporterShell } from './components/ReporterShell';
 
 export default function App() {
-  const [api, setApi] = useState<ApiState>('checking');
-
-  // Temporary: shows whether the backend is reachable, re-checked every 5 seconds.
-  useEffect(() => {
-    let active = true;
-    const check = () =>
-      getHealth().then(
-        () => active && setApi('connected'),
-        () => active && setApi('offline'),
-      );
-    check();
-    const timer = setInterval(check, 5000);
-    return () => {
-      active = false;
-      clearInterval(timer);
-    };
-  }, []);
-
   return (
-    <>
-      <header className={styles.header}>
-        <h1 className={styles.brand}>SIPKAK</h1>
-        <p className={styles.subtitle}>Campus damage reports · ITB Ganesha</p>
-      </header>
-      <p className={styles.status}>API: {api}</p>
-    </>
+    <Routes>
+      {/* The shell stays mounted across these routes and reads the path itself,
+          so the desktop map isn't rebuilt when you switch tabs. */}
+      <Route element={<ReporterShell />}>
+        <Route index />
+        <Route path="list" />
+        <Route path="report/new" />
+        <Route path="mine" />
+        <Route path="notifications" />
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
