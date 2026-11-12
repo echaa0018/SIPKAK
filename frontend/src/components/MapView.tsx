@@ -29,6 +29,8 @@ interface MapViewProps {
    * report markers stop reacting to clicks.
    */
   pinPicking?: { pin: LatLng | null; onChange: (pin: LatLng) => void };
+  /** Shows the selected report's description in a label above its pin (the admin map). */
+  labelSelected?: boolean;
 }
 
 /**
@@ -52,7 +54,14 @@ function KeepInView({ report, bottomPadding }: { report?: Report; bottomPadding:
 }
 
 /** The campus map with one marker per report. */
-export function MapView({ reports, variant, selectedId, onSelect, pinPicking }: MapViewProps) {
+export function MapView({
+  reports,
+  variant,
+  selectedId,
+  onSelect,
+  pinPicking,
+  labelSelected = false,
+}: MapViewProps) {
   const isPhone = variant === 'phone';
   const markersReact = !pinPicking;
 
@@ -81,6 +90,7 @@ export function MapView({ reports, variant, selectedId, onSelect, pinPicking }: 
             selected={report.id === selectedId}
             onSelect={markersReact ? onSelect : undefined}
             interactive={markersReact}
+            labelled={labelSelected && report.id === selectedId}
           />
         ))}
         {pinPicking ? (

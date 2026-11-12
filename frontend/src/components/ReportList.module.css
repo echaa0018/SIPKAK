@@ -80,6 +80,13 @@
 }
 
 /* Sizes match the wireframes, where rows fit a 320 px pane and a 360 px phone. */
+.titleLine {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .title {
   font-size: 15px;
   font-weight: 600;

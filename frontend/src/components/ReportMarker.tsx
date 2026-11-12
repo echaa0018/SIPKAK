@@ -1,6 +1,6 @@
 import L from 'leaflet';
 import { useEffect, useMemo, useRef } from 'react';
-import { Marker } from 'react-leaflet';
+import { Marker, Tooltip } from 'react-leaflet';
 import type { Report } from '../api/reports';
 import { statusLabels } from '../lib/status';
 import styles from './ReportMarker.module.css';
@@ -15,6 +15,8 @@ interface ReportMarkerProps {
   onSelect?: (id: number) => void;
   /** False while you place your own pin: clicks then go to the map, not the marker. */
   interactive?: boolean;
+  /** Shows the description in a dark label above the marker (the admin map's selected pin). */
+  labelled?: boolean;
 }
 
 /** One report on the map, drawn with CSS in its status style. */
@@ -23,6 +25,7 @@ export function ReportMarker({
   selected,
   onSelect,
   interactive = true,
+  labelled = false,
 }: ReportMarkerProps) {
   const markerRef = useRef<L.Marker>(null);
   const label = `${report.description}, ${statusLabels[report.status].long}`;
@@ -61,6 +64,12 @@ export function ReportMarker({
       eventHandlers={eventHandlers}
       interactive={interactive}
       keyboard={interactive}
-    />
+    >
+      {labelled && (
+        <Tooltip permanent direction="top" offset={[0, -14]} className={styles.label}>
+          {report.description}
+        </Tooltip>
+      )}
+    </Marker>
   );
 }

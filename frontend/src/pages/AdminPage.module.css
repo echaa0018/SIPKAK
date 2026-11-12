@@ -58,13 +58,68 @@
   cursor: pointer;
 }
 
+.error {
+  margin: 0;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--warning-border);
+  background: var(--warning-bg);
+  color: var(--warning);
+  font-size: 14px;
+}
+
+/* Three full-height panes separated by 1 px lines */
+.panes {
+  display: grid;
+  grid-template-columns: 340px 1fr 360px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* The heading and filter stay put; the list below them scrolls on its own. */
+.left {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--line);
+}
+
+.center {
+  position: relative;
+  min-width: 0;
+  background: var(--surface-soft);
+}
+
+.right {
+  min-height: 0;
+  overflow-y: auto;
+  border-left: 1px solid var(--line);
+}
+
+.listHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 16px 16px 4px;
+}
+
+.heading {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .main {
   flex: 1;
   min-height: 0;
 }
 
-.placeholder {
+.hint {
   margin: 0;
-  padding: 16px;
+  padding: 20px;
   color: var(--muted);
 }

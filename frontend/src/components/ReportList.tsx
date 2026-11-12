@@ -1,7 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import type { Report } from '../api/reports';
 import { formatWib } from '../lib/formatWib';
-import { formatPlace } from '../lib/reportText';
+import { formatPlace, reportNumber } from '../lib/reportText';
 import styles from './ReportList.module.css';
 import { ReportPhoto } from './ReportPhoto';
 import { StatusLabel } from './StatusLabel';
@@ -9,8 +9,8 @@ import { StatusLabel } from './StatusLabel';
 interface ReportListProps {
   reports: Report[];
   loading: boolean;
-  /** The grey line above the list, e.g. "8 reports · newest first". */
-  summary: string;
+  /** The grey line above the list, e.g. "8 reports · newest first". Left out if not given. */
+  summary?: string;
   onSelect: (id: number) => void;
   selectedId?: number;
   /** Phone rows have a photo; desktop rows are text only. */
@@ -18,8 +18,9 @@ interface ReportListProps {
   /**
    * "all": phone rows tag your own reports "Sent by you".
    * "mine": phone rows say "Sent <date>" with the full status on its own line.
+   * "admin": no photos; desktop rows show the report number top right.
    */
-  kind?: 'all' | 'mine';
+  kind?: 'all' | 'mine' | 'admin';
   /** Shown when there are no reports. */
   empty?: ReactNode;
 }
@@ -45,9 +46,14 @@ export function ReportList({
     listRef.current?.querySelector('[aria-current="true"]')?.scrollIntoView?.({ block: 'nearest' });
   }, [selectedId]);
 
+  const showPhoto = isPhone && kind !== 'admin';
+  const showNumber = !isPhone && kind === 'admin';
+
   return (
     <section className={styles.section}>
-      <p className={styles.summary}>{loading ? 'Loading reports…' : summary}</p>
+      {(summary || loading) && (
+        <p className={styles.summary}>{loading ? 'Loading reports…' : summary}</p>
+      )}
       {!loading && reports.length === 0 && <div className={styles.empty}>{empty}</div>}
       <ul className={styles.list} ref={listRef}>
         {reports.map((report) => (
@@ -58,9 +64,12 @@ export function ReportList({
               aria-current={report.id === selectedId ? 'true' : undefined}
               onClick={() => onSelect(report.id)}
             >
-              {isPhone && <ReportPhoto report={report} size="thumb" />}
+              {showPhoto && <ReportPhoto report={report} size="thumb" />}
               <span className={styles.text}>
-                <span className={styles.title}>{report.description}</span>
+                <span className={styles.titleLine}>
+                  <span className={styles.title}>{report.description}</span>
+                  {showNumber && <span className={styles.muted}>{reportNumber(report.id)}</span>}
+                </span>
                 <span className={styles.muted}>{formatPlace(report)}</span>
                 {historyRows ? (
                   <>

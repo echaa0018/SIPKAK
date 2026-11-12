@@ -27,6 +27,23 @@
   transform: scale(1.2);
 }
 
+/* Dark label above the selected pin (admin map). Overrides Leaflet's white tooltip. */
+.label {
+  padding: 6px 10px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--ink);
+  box-shadow: none;
+  color: var(--surface);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.label::before {
+  border-top-color: var(--ink);
+}
+
 /* Solid orange dot */
 .waiting {
   background: var(--status-waiting);
