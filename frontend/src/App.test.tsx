@@ -22,7 +22,7 @@ describe('App', () => {
     render(<App />);
 
     expect(await screen.findByText('API: connected')).toBeTruthy();
-    expect(fetchMock).toHaveBeenCalledWith('/api/health');
+    expect(fetchMock).toHaveBeenCalledWith('/api/health', expect.anything());
   });
 
   it('shows "offline" when the backend answers with an error', async () => {
