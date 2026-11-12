@@ -16,9 +16,21 @@
 }
 
 .empty {
-  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
   padding: 16px;
   color: var(--muted);
+}
+
+.empty p {
+  margin: 0;
+}
+
+.statusLine {
+  margin-top: 4px;
+  font-size: 14px;
 }
 
 .list {

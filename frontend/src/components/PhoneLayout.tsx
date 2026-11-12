@@ -5,6 +5,7 @@ import { campusCenter } from '../lib/campusMap';
 import type { LatLng } from '../lib/geo';
 import { BottomNav } from './BottomNav';
 import { MapView } from './MapView';
+import { MyReportsList } from './MyReportsList';
 import { NewReportForm } from './NewReportForm';
 import styles from './PhoneLayout.module.css';
 import type { LayoutProps, ReporterView } from './ReporterShell';
@@ -97,7 +98,9 @@ export function PhoneLayout(props: LayoutProps) {
           />
         )}
         {/* Temporary placeholders: the following steps fill in these screens. */}
-        {view === 'mine' && <p className={styles.placeholder}>Your reports</p>}
+        {view === 'mine' && (
+          <MyReportsList reports={reports} loading={loading} onSelect={onSelect} variant="phone" />
+        )}
         {view === 'notifications' && <p className={styles.placeholder}>Your notifications</p>}
       </main>
 

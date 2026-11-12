@@ -5,6 +5,7 @@ import type { LatLng } from '../lib/geo';
 import styles from './DesktopLayout.module.css';
 import { PlusIcon } from './icons';
 import { MapView } from './MapView';
+import { MyReportsList } from './MyReportsList';
 import { NewReportForm } from './NewReportForm';
 import type { LayoutProps } from './ReporterShell';
 import { ReportDetail } from './ReportDetail';
@@ -68,7 +69,15 @@ export function DesktopLayout(props: LayoutProps) {
             />
           )}
           {/* Temporary placeholders: the following steps fill in these tabs. */}
-          {leftTab === 'mine' && <p className={styles.placeholder}>Your reports</p>}
+          {leftTab === 'mine' && (
+            <MyReportsList
+              reports={reports}
+              loading={loading}
+              onSelect={onSelect}
+              selectedId={selected?.id}
+              variant="desktop"
+            />
+          )}
           {leftTab === 'notifications' && <p className={styles.placeholder}>Your notifications</p>}
         </aside>
 
