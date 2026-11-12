@@ -1,7 +1,10 @@
-import { Link } from 'react-router';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router';
+import type { LatLng } from '../lib/geo';
 import styles from './DesktopLayout.module.css';
 import { PlusIcon } from './icons';
 import { MapView } from './MapView';
+import { NewReportForm } from './NewReportForm';
 import type { LayoutProps } from './ReporterShell';
 import { ReportDetail } from './ReportDetail';
 import { ReportList } from './ReportList';
@@ -20,6 +23,9 @@ export function DesktopLayout(props: LayoutProps) {
   // The left pane shows My reports or Notifications on those URLs, and all reports otherwise
   // (on /list and /report/new too).
   const leftTab = view === 'mine' || view === 'notifications' ? view : 'all';
+  const navigate = useNavigate();
+  // The form's pin, placed on the big map. Starts empty: click the map or use your location.
+  const [pin, setPin] = useState<LatLng | null>(null);
 
   return (
     <div className={styles.layout}>
@@ -73,12 +79,25 @@ export function DesktopLayout(props: LayoutProps) {
             variant="desktop"
             selectedId={selected?.id}
             onSelect={onSelect}
+            pinPicking={view === 'new' ? { pin, onChange: setPin } : undefined}
           />
         </section>
 
         <aside className={styles.right} aria-label="Details">
           {view === 'new' ? (
-            <p className={styles.placeholder}>Report damage form</p>
+            <NewReportForm
+              variant="desktop"
+              pin={pin}
+              onPinChange={setPin}
+              reports={reports}
+              onSent={(report) => {
+                setPin(null);
+                reload();
+                onSelect(report.id);
+              }}
+              onConfirmed={reload}
+              onClose={() => navigate('/')}
+            />
           ) : selected ? (
             <ReportDetail report={selected} onClose={onCloseSelected} onConfirmed={reload} />
           ) : (

@@ -53,6 +53,21 @@ export const BellIcon = (props: IconProps) => (
   </Icon>
 );
 
+export const CrosshairIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <circle cx="12" cy="12" r="7" />
+    <circle cx="12" cy="12" r="2.5" />
+    <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+  </Icon>
+);
+
+export const CameraIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M4 8h3l2-3h6l2 3h3v11H4V8Z" />
+    <circle cx="12" cy="13" r="3.5" />
+  </Icon>
+);
+
 export const CloseIcon = (props: IconProps) => (
   <Icon {...props}>
     <path d="M6 6l12 12M18 6 6 18" />

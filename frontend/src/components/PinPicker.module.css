@@ -1,0 +1,50 @@
+.picker {
+  position: relative;
+  height: 160px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.map {
+  height: 100%;
+  background: var(--surface-soft);
+}
+
+/* Both sit above Leaflet's panes, centred on the map, and let touches through to it. */
+.accuracy,
+.pin {
+  position: absolute;
+  z-index: 500;
+  top: 50%;
+  left: 50%;
+  pointer-events: none;
+}
+
+.accuracy {
+  border: 1px solid var(--muted);
+  border-radius: 50%;
+  background: rgba(98, 98, 93, 0.12);
+  transform: translate(-50%, -50%);
+}
+
+/* The pin's tip (16, 39 in its 32 × 40 box) is the map's centre. */
+.pin {
+  width: 32px;
+  height: 40px;
+  margin: -39px 0 0 -16px;
+}
+
+.credit {
+  position: absolute;
+  z-index: 500;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 1px 6px;
+  border-radius: 4px 0 0 0;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--muted);
+  font-size: 10px;
+  pointer-events: none;
+}

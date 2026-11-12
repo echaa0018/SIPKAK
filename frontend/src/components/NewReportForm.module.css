@@ -1,0 +1,266 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 16px;
+}
+
+.desktop {
+  padding: 16px 20px 24px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.heading {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-right: -10px;
+  border: none;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.legendRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 0;
+}
+
+.label {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.hint,
+.muted {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.locationRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.coords {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  margin: 0;
+  font-size: 14px;
+}
+
+.phone .coords {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.locate {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+/* Secondary button: outlined */
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1.5px solid var(--ink);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.secondary:hover {
+  background: var(--surface-soft);
+}
+
+/* The small tester-only select under "Use my location" */
+.simulate {
+  /* As wide as the button above it, however long the building names are. */
+  width: 0;
+  min-width: 100%;
+  min-height: 32px;
+  padding: 0 6px;
+  border: 1px dashed var(--muted);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+}
+
+/* Duplicate warning */
+.warning {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--warning-border);
+  border-radius: var(--radius-lg);
+  background: var(--warning-bg);
+}
+
+.warning p {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  font-size: 14px;
+}
+
+.warning strong {
+  font-weight: 600;
+}
+
+.dropZone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 64px;
+  padding: 12px;
+  border: 1.5px dashed var(--muted);
+  border-radius: var(--radius-lg);
+  background: var(--surface-soft);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.desktop .dropZone {
+  flex-direction: column;
+  min-height: 110px;
+  font-weight: 500;
+}
+
+.dropZone:focus-within {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.preview img {
+  width: 96px;
+  height: 72px;
+  border-radius: var(--radius);
+  object-fit: cover;
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+}
+
+.grow {
+  flex: 1;
+}
+
+.floor {
+  width: 30%;
+}
+
+.input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--muted);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+}
+
+.input::placeholder {
+  color: var(--muted);
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--warning);
+}
+
+.textarea {
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+.error {
+  margin: 0;
+  color: var(--warning);
+  font-size: 13px;
+}
+
+/* Primary button: ink-filled */
+.primary {
+  min-height: 48px;
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--ink);
+  color: var(--surface);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

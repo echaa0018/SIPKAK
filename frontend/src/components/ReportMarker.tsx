@@ -13,10 +13,17 @@ interface ReportMarkerProps {
   report: Report;
   selected: boolean;
   onSelect?: (id: number) => void;
+  /** False while you place your own pin: clicks then go to the map, not the marker. */
+  interactive?: boolean;
 }
 
 /** One report on the map, drawn with CSS in its status style. */
-export function ReportMarker({ report, selected, onSelect }: ReportMarkerProps) {
+export function ReportMarker({
+  report,
+  selected,
+  onSelect,
+  interactive = true,
+}: ReportMarkerProps) {
   const markerRef = useRef<L.Marker>(null);
   const label = `${report.description}, ${statusLabels[report.status].long}`;
 
@@ -52,6 +59,8 @@ export function ReportMarker({ report, selected, onSelect }: ReportMarkerProps) 
       icon={icon}
       zIndexOffset={selected ? 1000 : 0}
       eventHandlers={eventHandlers}
+      interactive={interactive}
+      keyboard={interactive}
     />
   );
 }

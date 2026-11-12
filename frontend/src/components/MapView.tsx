@@ -11,8 +11,10 @@ import {
   maxZoom,
   minZoom,
 } from '../lib/campusMap';
+import type { LatLng } from '../lib/geo';
 import { statuses, statusLabels } from '../lib/status';
 import styles from './MapView.module.css';
+import { PinLayer } from './PinLayer';
 import { ReportMarker } from './ReportMarker';
 import { StatusDot } from './StatusDot';
 
@@ -22,6 +24,11 @@ interface MapViewProps {
   variant: 'phone' | 'desktop';
   selectedId?: number;
   onSelect?: (id: number) => void;
+  /**
+   * Set while reporting damage on desktop: you place your pin by clicking the map, and the
+   * report markers stop reacting to clicks.
+   */
+  pinPicking?: { pin: LatLng | null; onChange: (pin: LatLng) => void };
 }
 
 /**
@@ -45,8 +52,9 @@ function KeepInView({ report, bottomPadding }: { report?: Report; bottomPadding:
 }
 
 /** The campus map with one marker per report. */
-export function MapView({ reports, variant, selectedId, onSelect }: MapViewProps) {
+export function MapView({ reports, variant, selectedId, onSelect, pinPicking }: MapViewProps) {
   const isPhone = variant === 'phone';
+  const markersReact = !pinPicking;
 
   return (
     <div className={`${styles.wrapper} ${isPhone ? styles.phone : styles.desktop}`}>
@@ -67,17 +75,25 @@ export function MapView({ reports, variant, selectedId, onSelect }: MapViewProps
         <ImageOverlay url={mapImageUrl} bounds={campusBounds} />
         {reports.map((report) => (
           <ReportMarker
-            key={report.id}
+            // Leaflet only reads `interactive` when a marker is created, so re-create it.
+            key={`${report.id}-${markersReact}`}
             report={report}
             selected={report.id === selectedId}
-            onSelect={onSelect}
+            onSelect={markersReact ? onSelect : undefined}
+            interactive={markersReact}
           />
         ))}
-        <KeepInView
-          report={reports.find((r) => r.id === selectedId)}
-          bottomPadding={isPhone ? 330 : 60}
-        />
+        {pinPicking ? (
+          <PinLayer pin={pinPicking.pin} onChange={pinPicking.onChange} />
+        ) : (
+          <KeepInView
+            report={reports.find((r) => r.id === selectedId)}
+            bottomPadding={isPhone ? 330 : 60}
+          />
+        )}
       </MapContainer>
+
+      {pinPicking && <p className={styles.hint}>Click the map to place your pin</p>}
 
       <div className={styles.overlay}>
         <ul className={styles.legend} aria-label="Legend">

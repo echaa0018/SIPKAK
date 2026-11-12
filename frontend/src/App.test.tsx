@@ -120,7 +120,7 @@ describe('desktop layout', () => {
     ).toBe('page');
 
     fireEvent.click(screen.getByRole('link', { name: 'Report damage' }));
-    expect(screen.getByText('Report damage form')).toBeTruthy();
+    expect(screen.getByRole('form', { name: 'Report damage' })).toBeTruthy();
     expect(
       within(tabs).getByRole('link', { name: 'All reports' }).getAttribute('aria-current'),
     ).toBe('page');

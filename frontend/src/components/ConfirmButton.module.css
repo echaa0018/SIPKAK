@@ -24,6 +24,16 @@
   background: var(--surface-soft);
 }
 
+.warning {
+  min-height: 40px;
+  border-color: var(--warning);
+  color: var(--warning);
+}
+
+.warning:hover:not(:disabled) {
+  background: var(--surface);
+}
+
 .button:disabled {
   border-color: var(--line);
   color: var(--muted);

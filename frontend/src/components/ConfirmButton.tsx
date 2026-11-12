@@ -9,6 +9,8 @@ interface ConfirmButtonProps {
   /** Called after a successful +1, so the caller can reload the count. */
   onConfirmed: () => void;
   label?: string;
+  /** "warning" matches the orange duplicate warning in the report form. */
+  tone?: 'default' | 'warning';
 }
 
 /** "Same problem (+1)". Hidden on your own reports, disabled once you've confirmed. */
@@ -16,6 +18,7 @@ export function ConfirmButton({
   report,
   onConfirmed,
   label = 'Same problem (+1)',
+  tone = 'default',
 }: ConfirmButtonProps) {
   const [confirmed, setConfirmed] = useState(() => hasConfirmed(report.id));
   const [sending, setSending] = useState(false);
@@ -48,7 +51,7 @@ export function ConfirmButton({
     <div className={styles.wrapper}>
       <button
         type="button"
-        className={styles.button}
+        className={`${styles.button} ${tone === 'warning' ? styles.warning : ''}`}
         disabled={confirmed || sending}
         onClick={confirm}
       >

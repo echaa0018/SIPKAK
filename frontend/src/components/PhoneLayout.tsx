@@ -1,6 +1,10 @@
+import { useState } from 'react';
 import { NavLink } from 'react-router';
+import { campusCenter } from '../lib/campusMap';
+import type { LatLng } from '../lib/geo';
 import { BottomNav } from './BottomNav';
 import { MapView } from './MapView';
+import { NewReportForm } from './NewReportForm';
 import styles from './PhoneLayout.module.css';
 import type { LayoutProps, ReporterView } from './ReporterShell';
 import { ReportList } from './ReportList';
@@ -20,6 +24,8 @@ const plural = (n: number) => (n === 1 ? '1 report' : `${n} reports`);
 export function PhoneLayout(props: LayoutProps) {
   const { view, reports, loading, loadError, selected, onSelect, onCloseSelected, reload } = props;
   const title = titles[view];
+  // The form's pin starts in the middle of campus; drag the map or use your location to move it.
+  const [pin, setPin] = useState<LatLng | null>({ lat: campusCenter[0], lng: campusCenter[1] });
 
   return (
     <div className={styles.layout}>
@@ -72,8 +78,20 @@ export function PhoneLayout(props: LayoutProps) {
             variant="phone"
           />
         )}
+        {view === 'new' && (
+          <NewReportForm
+            variant="phone"
+            pin={pin}
+            onPinChange={setPin}
+            reports={reports}
+            onSent={(report) => {
+              reload();
+              onSelect(report.id);
+            }}
+            onConfirmed={reload}
+          />
+        )}
         {/* Temporary placeholders: the following steps fill in these screens. */}
-        {view === 'new' && <p className={styles.placeholder}>Report damage form</p>}
         {view === 'mine' && <p className={styles.placeholder}>Your reports</p>}
         {view === 'notifications' && <p className={styles.placeholder}>Your notifications</p>}
       </main>
