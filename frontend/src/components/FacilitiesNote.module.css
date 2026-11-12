@@ -1,0 +1,12 @@
+.note {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-lg);
+  background: var(--surface-soft);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.note strong {
+  font-weight: 600;
+}

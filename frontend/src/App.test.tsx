@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, useLocation } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 import { makeReport } from './test/fixtures';
@@ -14,18 +14,32 @@ function setDesktop(isDesktop: boolean) {
   }));
 }
 
+/** Shows the current URL, so tests can check it. */
+function Location() {
+  const { pathname, search } = useLocation();
+  return <output data-testid="location">{pathname + search}</output>;
+}
+
 function renderAt(path: string) {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <App />
+      <Location />
     </MemoryRouter>,
   );
 }
 
+const currentUrl = () => screen.getByTestId('location').textContent;
+
+const reports = [
+  makeReport({ id: 145, description: 'Cracked paving by the main gate', status: 'waiting' }),
+  makeReport({ id: 142, isMine: true }),
+];
+
 beforeEach(() => {
   vi.stubGlobal(
     'fetch',
-    vi.fn(async () => Response.json({ reports: [makeReport()] })),
+    vi.fn(async () => Response.json({ reports: reports.slice(1) })),
   );
 });
 
@@ -65,7 +79,7 @@ describe('phone layout', () => {
     expect(screen.getByRole('heading', { name: 'Report damage' })).toBeTruthy();
   });
 
-  it('switches between map and list', () => {
+  it('switches between map and list', async () => {
     setDesktop(false);
     renderAt('/');
     const toggle = screen.getByRole('navigation', { name: 'Show reports as' });
@@ -75,7 +89,7 @@ describe('phone layout', () => {
     expect(within(toggle).getByRole('link', { name: 'List' }).getAttribute('aria-current')).toBe(
       'page',
     );
-    expect(screen.getByText('All reports')).toBeTruthy();
+    expect(await screen.findByText('1 report on campus · newest first')).toBeTruthy();
     // The Map tab of the bottom nav stays highlighted on the list.
     const nav = screen.getByRole('navigation', { name: 'Main' });
     expect(within(nav).getByRole('link', { name: 'Map' }).getAttribute('aria-current')).toBe(
@@ -137,5 +151,81 @@ describe('map', () => {
     renderAt('/nope');
 
     expect(await screen.findByRole('list', { name: 'Legend' })).toBeTruthy();
+  });
+});
+
+describe('selecting a report', () => {
+  const useTwoReports = () =>
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => Response.json({ reports })),
+    );
+
+  it('opens the sheet from a marker on the phone and puts the id in the URL', async () => {
+    useTwoReports();
+    setDesktop(false);
+    renderAt('/');
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Lamp by the east stairs is out, In progress' }),
+    );
+
+    expect(currentUrl()).toBe('/?report=142');
+    const sheet = screen.getByRole('article', { name: 'Report #0142' });
+    expect(within(sheet).getByText('Note from facilities:')).toBeTruthy();
+
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Close' }));
+    expect(currentUrl()).toBe('/');
+    expect(screen.queryByRole('article')).toBeNull();
+  });
+
+  it('opens a report from the phone list on the map', async () => {
+    useTwoReports();
+    setDesktop(false);
+    renderAt('/list');
+
+    expect(await screen.findByText('Sent by you')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Cracked paving by the main gate/ }));
+
+    expect(currentUrl()).toBe('/?report=145');
+    expect(screen.getByRole('article', { name: 'Report #0145' })).toBeTruthy();
+  });
+
+  it('shows the report in the right pane on desktop and highlights its row and pin', async () => {
+    useTwoReports();
+    setDesktop(true);
+    const { container } = renderAt('/');
+
+    const list = screen.getByRole('complementary', { name: 'Reports' });
+    fireEvent.click(
+      await within(list).findByRole('button', { name: /Cracked paving by the main gate/ }),
+    );
+
+    expect(currentUrl()).toBe('/?report=145');
+    const details = screen.getByRole('complementary', { name: 'Details' });
+    expect(within(details).getByText('Report #0145')).toBeTruthy();
+    const row = within(list).getByRole('button', { name: /Cracked paving by the main gate/ });
+    expect(row.getAttribute('aria-current')).toBe('true');
+    const selectedPin = container.querySelector('.leaflet-marker-icon[class*="selected"]');
+    expect(selectedPin?.getAttribute('aria-label')).toBe(
+      'Cracked paving by the main gate, Waiting for review',
+    );
+  });
+
+  it('opens straight to the report when the URL has ?report=', async () => {
+    useTwoReports();
+    setDesktop(true);
+    renderAt('/?report=142');
+
+    const details = screen.getByRole('complementary', { name: 'Details' });
+    expect(await within(details).findByText('Report #0142')).toBeTruthy();
+  });
+
+  it('ignores an unknown report id', async () => {
+    useTwoReports();
+    setDesktop(true);
+    renderAt('/?report=9999');
+
+    expect(await screen.findByText('Select a report on the map or in the list.')).toBeTruthy();
   });
 });

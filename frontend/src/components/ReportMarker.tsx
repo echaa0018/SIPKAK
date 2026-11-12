@@ -9,8 +9,14 @@ const checkSvg =
   '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" ' +
   'stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 
+interface ReportMarkerProps {
+  report: Report;
+  selected: boolean;
+  onSelect?: (id: number) => void;
+}
+
 /** One report on the map, drawn with CSS in its status style. */
-export function ReportMarker({ report }: { report: Report }) {
+export function ReportMarker({ report, selected, onSelect }: ReportMarkerProps) {
   const markerRef = useRef<L.Marker>(null);
   const label = `${report.description}, ${statusLabels[report.status].long}`;
 
@@ -19,13 +25,13 @@ export function ReportMarker({ report }: { report: Report }) {
   const icon = useMemo(
     () =>
       L.divIcon({
-        className: styles.hitArea,
+        className: `${styles.hitArea} ${selected ? styles.selected : ''}`,
         html: `<span class="${styles.marker} ${styles[report.status]}">${
           report.status === 'done' ? checkSvg : ''
         }</span>`,
         iconSize: [44, 44],
       }),
-    [report.status],
+    [report.status, selected],
   );
 
   // Leaflet makes the marker a focusable role="button"; give it a name screen readers can read.
@@ -33,5 +39,19 @@ export function ReportMarker({ report }: { report: Report }) {
     markerRef.current?.getElement()?.setAttribute('aria-label', label);
   }, [label, icon]);
 
-  return <Marker ref={markerRef} position={[report.lat, report.lng]} icon={icon} />;
+  // Leaflet also turns Enter on a focused marker into a click.
+  const eventHandlers = useMemo(
+    () => ({ click: () => onSelect?.(report.id) }),
+    [onSelect, report.id],
+  );
+
+  return (
+    <Marker
+      ref={markerRef}
+      position={[report.lat, report.lng]}
+      icon={icon}
+      zIndexOffset={selected ? 1000 : 0}
+      eventHandlers={eventHandlers}
+    />
+  );
 }

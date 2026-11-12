@@ -62,9 +62,15 @@
 }
 
 .main {
+  position: relative; /* the report sheet sits at its bottom */
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+}
+
+/* Screens that scroll their own content (the list) fill the main area. */
+.main > section {
+  height: 100%;
 }
 
 .error {

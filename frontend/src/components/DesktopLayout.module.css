@@ -50,17 +50,17 @@
   min-height: 0;
 }
 
-.left,
-.right {
-  min-height: 0;
-  overflow-y: auto;
-}
-
+/* The tabs stay put; the list below them scrolls on its own. */
 .left {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   border-right: 1px solid var(--line);
 }
 
 .right {
+  min-height: 0;
+  overflow-y: auto;
   border-left: 1px solid var(--line);
 }
 

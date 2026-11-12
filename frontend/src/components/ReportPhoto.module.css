@@ -1,0 +1,27 @@
+.photo {
+  display: block;
+  flex: none;
+  border-radius: var(--radius-lg);
+  background: var(--placeholder);
+  object-fit: cover;
+}
+
+.thumb {
+  width: 48px;
+  height: 48px;
+  font-size: 11px;
+  text-align: center;
+}
+
+.large {
+  width: 100%;
+  aspect-ratio: 5 / 3;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 13px;
+}

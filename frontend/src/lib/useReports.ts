@@ -4,6 +4,7 @@ import { listReports, type Report } from '../api/reports';
 /** All reports, newest first. Call `reload()` after a change to fetch them again. */
 export function useReports() {
   const [reports, setReports] = useState<Report[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   // Bumping this number re-runs the effect below.
   const [version, setVersion] = useState(0);
@@ -15,9 +16,12 @@ export function useReports() {
         if (!current) return;
         setReports(list);
         setError(false);
+        setLoading(false);
       },
       () => {
-        if (current) setError(true);
+        if (!current) return;
+        setError(true);
+        setLoading(false);
       },
     );
     return () => {
@@ -26,5 +30,5 @@ export function useReports() {
   }, [version]);
 
   const reload = useCallback(() => setVersion((v) => v + 1), []);
-  return { reports, error, reload };
+  return { reports, loading, error, reload };
 }

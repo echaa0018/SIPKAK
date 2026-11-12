@@ -1,9 +1,10 @@
 import { Link } from 'react-router';
-import type { Report } from '../api/reports';
 import styles from './DesktopLayout.module.css';
 import { PlusIcon } from './icons';
 import { MapView } from './MapView';
-import type { ReporterView } from './ReporterShell';
+import type { LayoutProps } from './ReporterShell';
+import { ReportDetail } from './ReportDetail';
+import { ReportList } from './ReportList';
 
 const tabs = [
   { to: '/', label: 'All reports', view: 'all' },
@@ -11,14 +12,11 @@ const tabs = [
   { to: '/notifications', label: 'Notifications', view: 'notifications' },
 ] as const;
 
-interface LayoutProps {
-  view: ReporterView;
-  reports: Report[];
-  loadError: boolean;
-}
+const plural = (n: number) => (n === 1 ? '1 report' : `${n} reports`);
 
 /** Desktop layout: a header, then three panes (list tabs, map, details) split by thin lines. */
-export function DesktopLayout({ view, reports, loadError }: LayoutProps) {
+export function DesktopLayout(props: LayoutProps) {
+  const { view, reports, loading, loadError, selected, onSelect, onCloseSelected, reload } = props;
   // The left pane shows My reports or Notifications on those URLs, and all reports otherwise
   // (on /list and /report/new too).
   const leftTab = view === 'mine' || view === 'notifications' ? view : 'all';
@@ -49,12 +47,19 @@ export function DesktopLayout({ view, reports, loadError }: LayoutProps) {
               </Link>
             ))}
           </nav>
-          {/* Temporary placeholders: the following steps fill in each pane. */}
-          <p className={styles.placeholder}>
-            {leftTab === 'all' && 'All reports'}
-            {leftTab === 'mine' && 'Your reports'}
-            {leftTab === 'notifications' && 'Your notifications'}
-          </p>
+          {leftTab === 'all' && (
+            <ReportList
+              reports={reports}
+              loading={loading}
+              summary={`${plural(reports.length)} · newest first`}
+              onSelect={onSelect}
+              selectedId={selected?.id}
+              variant="desktop"
+            />
+          )}
+          {/* Temporary placeholders: the following steps fill in these tabs. */}
+          {leftTab === 'mine' && <p className={styles.placeholder}>Your reports</p>}
+          {leftTab === 'notifications' && <p className={styles.placeholder}>Your notifications</p>}
         </aside>
 
         <section className={styles.center} aria-label="Map">
@@ -63,13 +68,22 @@ export function DesktopLayout({ view, reports, loadError }: LayoutProps) {
               Couldn’t load the reports. Check your connection and reload the page.
             </p>
           )}
-          <MapView reports={reports} variant="desktop" />
+          <MapView
+            reports={reports}
+            variant="desktop"
+            selectedId={selected?.id}
+            onSelect={onSelect}
+          />
         </section>
 
         <aside className={styles.right} aria-label="Details">
-          <p className={styles.placeholder}>
-            {view === 'new' ? 'Report damage form' : 'Select a report on the map or in the list.'}
-          </p>
+          {view === 'new' ? (
+            <p className={styles.placeholder}>Report damage form</p>
+          ) : selected ? (
+            <ReportDetail report={selected} onClose={onCloseSelected} onConfirmed={reload} />
+          ) : (
+            <p className={styles.placeholder}>Select a report on the map or in the list.</p>
+          )}
         </aside>
       </div>
     </div>

@@ -1,0 +1,114 @@
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 16px 20px 24px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.number {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Icon-only button with a 44 px target */
+.close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-right: -10px;
+  border: none;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.close:hover {
+  background: var(--surface-soft);
+}
+
+.title {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.place,
+.muted {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Timeline: a dot per step joined by a thin line */
+.timeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 14px 24px;
+}
+
+.timeline li::before {
+  position: absolute;
+  top: 4px;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  content: '';
+}
+
+.timeline li:not(:last-child)::after {
+  position: absolute;
+  top: 20px;
+  bottom: 2px;
+  left: 5px;
+  width: 2px;
+  background: var(--line);
+  content: '';
+}
+
+.timeline li.reached::before {
+  border-color: var(--ink);
+  background: var(--ink);
+}
+
+.stepLabel {
+  font-weight: 600;
+}
+
+.timeline li:not(.reached) .stepLabel {
+  color: var(--muted);
+}
+
+.stepWhen {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}

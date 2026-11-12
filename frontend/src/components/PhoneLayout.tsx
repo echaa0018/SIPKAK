@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router';
-import type { Report } from '../api/reports';
 import { BottomNav } from './BottomNav';
 import { MapView } from './MapView';
 import styles from './PhoneLayout.module.css';
-import type { ReporterView } from './ReporterShell';
+import type { LayoutProps, ReporterView } from './ReporterShell';
+import { ReportList } from './ReportList';
+import { ReportSheet } from './ReportSheet';
 
 const titles: Record<ReporterView, string | null> = {
   map: null, // the map and list show the SIPKAK name with the Map/List switch instead
@@ -13,14 +14,11 @@ const titles: Record<ReporterView, string | null> = {
   notifications: 'Notifications',
 };
 
-interface LayoutProps {
-  view: ReporterView;
-  reports: Report[];
-  loadError: boolean;
-}
+const plural = (n: number) => (n === 1 ? '1 report' : `${n} reports`);
 
 /** Phone layout: a top bar, one screen, and the bottom nav. */
-export function PhoneLayout({ view, reports, loadError }: LayoutProps) {
+export function PhoneLayout(props: LayoutProps) {
+  const { view, reports, loading, loadError, selected, onSelect, onCloseSelected, reload } = props;
   const title = titles[view];
 
   return (
@@ -51,10 +49,30 @@ export function PhoneLayout({ view, reports, loadError }: LayoutProps) {
         </p>
       )}
 
-      {/* Temporary placeholders: the following steps fill in the other screens. */}
       <main className={styles.main}>
-        {view === 'map' && <MapView reports={reports} variant="phone" />}
-        {view === 'list' && <p className={styles.placeholder}>All reports</p>}
+        {view === 'map' && (
+          <>
+            <MapView
+              reports={reports}
+              variant="phone"
+              selectedId={selected?.id}
+              onSelect={onSelect}
+            />
+            {selected && (
+              <ReportSheet report={selected} onClose={onCloseSelected} onConfirmed={reload} />
+            )}
+          </>
+        )}
+        {view === 'list' && (
+          <ReportList
+            reports={reports}
+            loading={loading}
+            summary={`${plural(reports.length)} on campus · newest first`}
+            onSelect={onSelect}
+            variant="phone"
+          />
+        )}
+        {/* Temporary placeholders: the following steps fill in these screens. */}
         {view === 'new' && <p className={styles.placeholder}>Report damage form</p>}
         {view === 'mine' && <p className={styles.placeholder}>Your reports</p>}
         {view === 'notifications' && <p className={styles.placeholder}>Your notifications</p>}
