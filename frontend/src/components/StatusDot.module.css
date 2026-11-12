@@ -1,0 +1,22 @@
+/* waiting: solid orange dot · in_progress: blue ring · done: grey outline circle */
+.dot {
+  display: inline-block;
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.waiting {
+  background: var(--status-waiting);
+}
+
+.in_progress {
+  border: 3.5px solid var(--status-in-progress);
+  background: var(--surface);
+}
+
+.done {
+  border: 1.5px solid var(--status-done);
+  background: var(--surface);
+}

@@ -1,5 +1,7 @@
 import { NavLink } from 'react-router';
+import type { Report } from '../api/reports';
 import { BottomNav } from './BottomNav';
+import { MapView } from './MapView';
 import styles from './PhoneLayout.module.css';
 import type { ReporterView } from './ReporterShell';
 
@@ -11,8 +13,14 @@ const titles: Record<ReporterView, string | null> = {
   notifications: 'Notifications',
 };
 
+interface LayoutProps {
+  view: ReporterView;
+  reports: Report[];
+  loadError: boolean;
+}
+
 /** Phone layout: a top bar, one screen, and the bottom nav. */
-export function PhoneLayout({ view }: { view: ReporterView }) {
+export function PhoneLayout({ view, reports, loadError }: LayoutProps) {
   const title = titles[view];
 
   return (
@@ -37,9 +45,15 @@ export function PhoneLayout({ view }: { view: ReporterView }) {
         )}
       </header>
 
-      {/* Temporary placeholders: the following steps fill in each screen. */}
+      {loadError && (
+        <p className={styles.error} role="alert">
+          Couldn’t load the reports. Check your connection and reload the page.
+        </p>
+      )}
+
+      {/* Temporary placeholders: the following steps fill in the other screens. */}
       <main className={styles.main}>
-        {view === 'map' && <p className={styles.placeholder}>Campus map</p>}
+        {view === 'map' && <MapView reports={reports} variant="phone" />}
         {view === 'list' && <p className={styles.placeholder}>All reports</p>}
         {view === 'new' && <p className={styles.placeholder}>Report damage form</p>}
         {view === 'mine' && <p className={styles.placeholder}>Your reports</p>}

@@ -67,6 +67,15 @@
   overflow-y: auto;
 }
 
+.error {
+  margin: 0;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--warning-border);
+  background: var(--warning-bg);
+  color: var(--warning);
+  font-size: 14px;
+}
+
 .placeholder {
   margin: 0;
   padding: 16px;

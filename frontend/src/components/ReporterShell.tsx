@@ -1,5 +1,6 @@
 import { useLocation } from 'react-router';
 import { useIsDesktop } from '../lib/useIsDesktop';
+import { useReports } from '../lib/useReports';
 import { DesktopLayout } from './DesktopLayout';
 import { PhoneLayout } from './PhoneLayout';
 
@@ -19,6 +20,8 @@ export function ReporterShell() {
   const { pathname } = useLocation();
   const isDesktop = useIsDesktop();
   const view = viewByPath[pathname] ?? 'map';
+  const { reports, error } = useReports();
 
-  return isDesktop ? <DesktopLayout view={view} /> : <PhoneLayout view={view} />;
+  const Layout = isDesktop ? DesktopLayout : PhoneLayout;
+  return <Layout view={view} reports={reports} loadError={error} />;
 }

@@ -1,6 +1,8 @@
 import { Link } from 'react-router';
+import type { Report } from '../api/reports';
 import styles from './DesktopLayout.module.css';
 import { PlusIcon } from './icons';
+import { MapView } from './MapView';
 import type { ReporterView } from './ReporterShell';
 
 const tabs = [
@@ -9,8 +11,14 @@ const tabs = [
   { to: '/notifications', label: 'Notifications', view: 'notifications' },
 ] as const;
 
+interface LayoutProps {
+  view: ReporterView;
+  reports: Report[];
+  loadError: boolean;
+}
+
 /** Desktop layout: a header, then three panes (list tabs, map, details) split by thin lines. */
-export function DesktopLayout({ view }: { view: ReporterView }) {
+export function DesktopLayout({ view, reports, loadError }: LayoutProps) {
   // The left pane shows My reports or Notifications on those URLs, and all reports otherwise
   // (on /list and /report/new too).
   const leftTab = view === 'mine' || view === 'notifications' ? view : 'all';
@@ -50,7 +58,12 @@ export function DesktopLayout({ view }: { view: ReporterView }) {
         </aside>
 
         <section className={styles.center} aria-label="Map">
-          <p className={styles.placeholder}>Campus map</p>
+          {loadError && (
+            <p className={styles.error} role="alert">
+              Couldn’t load the reports. Check your connection and reload the page.
+            </p>
+          )}
+          <MapView reports={reports} variant="desktop" />
         </section>
 
         <aside className={styles.right} aria-label="Details">

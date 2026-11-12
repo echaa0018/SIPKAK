@@ -94,6 +94,21 @@
   font-weight: 600;
 }
 
+.error {
+  position: absolute;
+  z-index: 1000;
+  top: 12px;
+  left: 50%;
+  margin: 0;
+  padding: 8px 14px;
+  border: 1px solid var(--warning-border);
+  border-radius: var(--radius);
+  background: var(--warning-bg);
+  color: var(--warning);
+  font-size: 14px;
+  transform: translateX(-50%);
+}
+
 .placeholder {
   margin: 0;
   padding: 20px;

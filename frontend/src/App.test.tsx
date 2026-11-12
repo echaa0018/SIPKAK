@@ -1,7 +1,8 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
+import { makeReport } from './test/fixtures';
 
 /** Pretends the window is phone-sized or desktop-sized (jsdom has no real matchMedia). */
 function setDesktop(isDesktop: boolean) {
@@ -20,6 +21,13 @@ function renderAt(path: string) {
     </MemoryRouter>,
   );
 }
+
+beforeEach(() => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => Response.json({ reports: [makeReport()] })),
+  );
+});
 
 afterEach(() => {
   cleanup();
@@ -105,9 +113,29 @@ describe('desktop layout', () => {
   });
 });
 
-it('sends unknown paths back to the map', () => {
-  setDesktop(false);
-  renderAt('/nope');
+describe('map', () => {
+  it('loads the reports from the API and shows them as markers', async () => {
+    setDesktop(false);
+    renderAt('/');
 
-  expect(screen.getByText('Campus map')).toBeTruthy();
+    expect(
+      await screen.findByRole('button', { name: 'Lamp by the east stairs is out, In progress' }),
+    ).toBeTruthy();
+    expect(fetch).toHaveBeenCalledWith('/api/reports', expect.anything());
+  });
+
+  it('says so when the reports cannot be loaded', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+    setDesktop(true);
+    renderAt('/');
+
+    expect((await screen.findByRole('alert')).textContent).toContain('Couldn’t load the reports');
+  });
+
+  it('is where unknown paths end up', async () => {
+    setDesktop(false);
+    renderAt('/nope');
+
+    expect(await screen.findByRole('list', { name: 'Legend' })).toBeTruthy();
+  });
 });
