@@ -1,15 +1,19 @@
-import { seedReports } from '../data/seed.js';
-import type { Store, StoredReport } from './store.js';
+import { seedNotifications, seedReports } from '../data/seed.js';
+import type { Store } from './store.js';
 
-const newestFirst = (a: StoredReport, b: StoredReport) =>
+const newestFirst = (a: { id: number; createdAt: string }, b: { id: number; createdAt: string }) =>
   Date.parse(b.createdAt) - Date.parse(a.createdAt) || b.id - a.id;
+
+const nextIdAfter = (items: { id: number }[]) => Math.max(0, ...items.map((item) => item.id)) + 1;
 
 // SIMULATED: data lives in this process and resets on every restart.
 // The real app keeps it in a database (the Supabase store in phase 4).
-export function createMemoryStore(initial: StoredReport[] = seedReports): Store {
-  // Work on a copy, and hand out copies, so nobody can change the seed or the store by accident.
-  const reports = structuredClone(initial);
-  let nextId = Math.max(0, ...reports.map((r) => r.id)) + 1;
+export function createMemoryStore(): Store {
+  // Work on copies, and hand out copies, so nobody can change the seed or the store by accident.
+  const reports = structuredClone(seedReports);
+  const notifications = structuredClone(seedNotifications);
+  let nextReportId = nextIdAfter(reports);
+  let nextNotificationId = nextIdAfter(notifications);
   // Who confirmed what, as "reportId:reporterId". The seed only has counts, not names.
   const confirmed = new Set<string>();
 
@@ -29,7 +33,7 @@ export function createMemoryStore(initial: StoredReport[] = seedReports): Store 
     },
 
     async createReport(input) {
-      const report = { ...structuredClone(input), id: nextId++ };
+      const report = { ...structuredClone(input), id: nextReportId++ };
       reports.push(report);
       return structuredClone(report);
     },
@@ -52,6 +56,25 @@ export function createMemoryStore(initial: StoredReport[] = seedReports): Store 
       if (note !== undefined) report.note = note;
       report.updatedAt = at;
       return structuredClone(report);
+    },
+
+    async listNotifications(reporterId) {
+      const mine = notifications.filter((n) => n.reporterId === reporterId);
+      return structuredClone(mine.sort(newestFirst));
+    },
+
+    async createNotification(input) {
+      const notification = { ...input, id: nextNotificationId++, read: false };
+      notifications.push(notification);
+      return structuredClone(notification);
+    },
+
+    async markNotificationsRead(reporterId, ids) {
+      for (const n of notifications) {
+        if (n.reporterId === reporterId && (ids === undefined || ids.includes(n.id))) {
+          n.read = true;
+        }
+      }
     },
   };
 }

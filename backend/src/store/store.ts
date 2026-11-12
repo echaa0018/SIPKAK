@@ -24,6 +24,19 @@ export interface StoredReport {
   history: StatusChange[];
 }
 
+// A message for a reporter after facilities updated their report.
+export interface StoredNotification {
+  id: number;
+  reporterId: string;
+  reportId: number;
+  /** "status" when the status changed (the note may come too), "note" for a note only. */
+  kind: 'status' | 'note';
+  status: ReportStatus | null;
+  note: string | null;
+  read: boolean;
+  createdAt: string;
+}
+
 export interface ReportFilter {
   status?: ReportStatus;
   reporterId?: string;
@@ -49,4 +62,13 @@ export interface Store {
     id: number,
     update: { status?: ReportStatus; note?: string; at: string },
   ): Promise<StoredReport | undefined>;
+
+  /** This reporter's notifications, newest first. */
+  listNotifications(reporterId: string): Promise<StoredNotification[]>;
+  /** Saves a new, unread notification and gives it the next id. */
+  createNotification(
+    notification: Omit<StoredNotification, 'id' | 'read'>,
+  ): Promise<StoredNotification>;
+  /** Marks this reporter's notifications with these ids as read (all of them without ids). */
+  markNotificationsRead(reporterId: string, ids?: number[]): Promise<void>;
 }

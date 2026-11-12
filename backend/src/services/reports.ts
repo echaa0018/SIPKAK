@@ -95,7 +95,10 @@ export function createReportService(store: Store) {
       return { confirmations };
     },
 
-    /** Admin update. Setting the status it already has, with no note, is rejected. */
+    /**
+     * Admin update. Setting the status it already has, with no note, is rejected.
+     * Every update sends the reporter one notification.
+     */
     async update(id: number, { status, note }: UpdateReportInput): Promise<Report> {
       const report = await store.getReport(id);
       if (!report) throw new AppError('NOT_FOUND', `Report ${id} not found`);
@@ -107,10 +110,20 @@ export function createReportService(store: Store) {
         });
       }
 
+      const at = new Date().toISOString();
       const updated = await store.updateReport(id, {
         status: statusChanged ? status : undefined,
         note,
-        at: new Date().toISOString(),
+        at,
+      });
+
+      await store.createNotification({
+        reporterId: report.reporterId,
+        reportId: id,
+        kind: statusChanged ? 'status' : 'note',
+        status: statusChanged ? status : null,
+        note: note ?? null,
+        createdAt: at,
       });
       return toApiReport(updated!);
     },

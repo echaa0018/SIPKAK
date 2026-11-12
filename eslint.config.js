@@ -10,8 +10,12 @@ export default defineConfig([
   tseslint.configs.recommended,
   {
     rules: {
-      // Allow intentionally unused parameters such as `_req` or Express's `_next`.
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      // Allow intentionally unused parameters such as `_req` or Express's `_next`,
+      // and fields pulled out of an object only to leave them out of `...rest`.
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', ignoreRestSiblings: true },
+      ],
     },
   },
   {

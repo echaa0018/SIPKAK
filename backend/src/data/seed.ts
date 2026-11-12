@@ -1,4 +1,4 @@
-import type { StoredReport } from '../store/store.js';
+import type { StoredNotification, StoredReport } from '../store/store.js';
 
 // Owner of the seed reports that show up under "My reports" in the demo.
 export const demoReporterId = '00000000-0000-4000-8000-000000000001';
@@ -206,5 +206,48 @@ export const seedReports: StoredReport[] = [
         at: '2026-10-21T03:05:00Z',
       },
     ],
+  },
+];
+
+export const seedNotifications: StoredNotification[] = [
+  {
+    id: 4,
+    reporterId: demoReporterId,
+    reportId: 142,
+    kind: 'status',
+    status: 'in_progress',
+    note: 'Technician scheduled for 12/11/2026.',
+    read: false,
+    createdAt: '2026-11-11T04:20:00Z',
+  },
+  {
+    id: 3,
+    reporterId: demoReporterId,
+    reportId: 98,
+    kind: 'note',
+    status: null,
+    note: 'Passed to the CC Timur building manager.',
+    read: false,
+    createdAt: '2026-11-10T07:05:00Z',
+  },
+  {
+    id: 2,
+    reporterId: demoReporterId,
+    reportId: 127,
+    kind: 'status',
+    status: 'done',
+    note: 'Chair replaced.',
+    read: true,
+    createdAt: '2026-11-05T03:30:00Z',
+  },
+  {
+    id: 1,
+    reporterId: demoReporterId,
+    reportId: 127,
+    kind: 'status',
+    status: 'in_progress',
+    note: null,
+    read: true,
+    createdAt: '2026-11-04T08:10:00Z',
   },
 ];

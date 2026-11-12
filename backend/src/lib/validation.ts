@@ -59,6 +59,11 @@ export const createReportBody = z.object({
 
 export type CreateReportInput = z.infer<typeof createReportBody>;
 
+// POST /api/notifications/read. No ids means "mark all as read".
+export const markReadBody = z.object({
+  ids: z.array(z.number().int().positive()).optional(),
+});
+
 // POST /api/admin/login
 export const loginBody = z.object({
   password: z.string({ error: 'Required' }).min(1, 'Required'),
