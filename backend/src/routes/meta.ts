@@ -1,12 +1,17 @@
 import { Router } from 'express';
 import { buildings } from '../data/buildings.js';
+import type { Store } from '../store/store.js';
 
-export const metaRouter = Router();
+export function metaRouter(storeKind: Store['kind']) {
+  const router = Router();
 
-metaRouter.get('/health', (_req, res) => {
-  res.json({ ok: true, store: process.env.DATA_STORE ?? 'memory' });
-});
+  router.get('/health', (_req, res) => {
+    res.json({ ok: true, store: storeKind });
+  });
 
-metaRouter.get('/buildings', (_req, res) => {
-  res.json({ buildings });
-});
+  router.get('/buildings', (_req, res) => {
+    res.json({ buildings });
+  });
+
+  return router;
+}

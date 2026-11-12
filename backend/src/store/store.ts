@@ -44,6 +44,8 @@ export interface ReportFilter {
 
 // Every method is async so the memory store and the Supabase store share one interface.
 export interface Store {
+  /** Which store this is; /api/health reports it. */
+  readonly kind: 'memory' | 'supabase';
   /** Reports matching the filter (all of them without one), newest first. */
   listReports(filter?: ReportFilter): Promise<StoredReport[]>;
   getReport(id: number): Promise<StoredReport | undefined>;

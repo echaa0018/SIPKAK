@@ -18,6 +18,8 @@ export function createMemoryStore(): Store {
   const confirmed = new Set<string>();
 
   return {
+    kind: 'memory',
+
     async listReports({ status, reporterId } = {}) {
       const matching = reports.filter(
         (r) =>
