@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { MemoryRouter, useLocation } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
-import { makeReport } from './test/fixtures';
+import { makeReport, mockGeolocation } from './test/fixtures';
 
 /** Pretends the window is phone-sized or desktop-sized (jsdom has no real matchMedia). */
 function setDesktop(isDesktop: boolean) {
@@ -298,6 +298,7 @@ describe('sending a report', () => {
   }
 
   async function fillAndSend() {
+    mockGeolocation({ lat: -6.89258, lng: 107.61015, accuracy: 12 });
     fireEvent.click(await screen.findByRole('button', { name: 'Use my location' }));
     await screen.findAllByRole('option', { name: 'Aula Barat' });
     fireEvent.change(screen.getByLabelText("What's wrong?"), {

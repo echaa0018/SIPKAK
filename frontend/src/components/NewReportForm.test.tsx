@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Report } from '../api/reports';
 import type { LatLng } from '../lib/geo';
-import { makeReport } from '../test/fixtures';
+import { makeReport, mockGeolocation } from '../test/fixtures';
 import { NewReportForm } from './NewReportForm';
 
 // jsdom can't draw on a canvas, so pretend every photo resizes to this.
@@ -70,7 +70,13 @@ async function renderForm(onSent = vi.fn()) {
 
 const buildingSelect = () => screen.getByLabelText('Building') as HTMLSelectElement;
 
-beforeEach(() => fakeApi());
+// "Use my location" finds you 26 m from the lamp report, ±12 m.
+const atAulaBarat = { lat: -6.89258, lng: 107.61015, accuracy: 12 };
+
+beforeEach(() => {
+  fakeApi();
+  mockGeolocation(atAulaBarat);
+});
 
 afterEach(() => {
   cleanup();
@@ -79,7 +85,7 @@ afterEach(() => {
 });
 
 describe('location', () => {
-  it('"Use my location" moves the pin to the simulated spot and picks the nearest building', async () => {
+  it('"Use my location" moves the pin to your GPS position and picks the nearest building', async () => {
     await renderForm();
 
     fireEvent.click(screen.getByRole('button', { name: 'Use my location' }));
@@ -100,6 +106,41 @@ describe('location', () => {
     expect(warning.textContent).toContain('Lamp by the east stairs is out');
     expect(screen.getByRole('button', { name: 'Same problem (+1)' })).toBeTruthy();
     expect(nearbyCalls()).toHaveLength(1);
+  });
+
+  it('shows the GPS accuracy it got', async () => {
+    mockGeolocation({ ...atAulaBarat, accuracy: 7.6 });
+    await renderForm();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Use my location' }));
+
+    expect(screen.getByText('Accurate to ±8 m')).toBeTruthy();
+  });
+
+  it('asks you to place the pin when location access is blocked', async () => {
+    mockGeolocation({ errorCode: 1 });
+    await renderForm();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Use my location' }));
+
+    expect(
+      screen.getByText(
+        'Location access is blocked. Allow it in your browser, or place the pin on the map.',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText('not placed yet')).toBeTruthy();
+  });
+
+  it('does not move the pin when you are outside the campus', async () => {
+    mockGeolocation({ lat: -6.9, lng: 107.6, accuracy: 10 });
+    await renderForm();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Use my location' }));
+
+    expect(
+      screen.getByText('You seem to be outside ITB Ganesha. Place the pin on the map instead.'),
+    ).toBeTruthy();
+    expect(screen.getByText('not placed yet')).toBeTruthy();
   });
 
   it('can "stand" at any building with the simulate select', async () => {
