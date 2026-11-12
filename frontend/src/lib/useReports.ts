@@ -4,7 +4,10 @@ import { listReports, type Report } from '../api/reports';
 // After a failed load, try again this much later (e.g. the API was still starting up).
 export const RETRY_MS = 3_000;
 
-/** All reports, newest first. Call `reload()` after a change to fetch them again. */
+/**
+ * All reports, newest first. Call `reload()` after a change to fetch them again; they also
+ * reload whenever the window gets focus.
+ */
 export function useReports() {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,5 +39,13 @@ export function useReports() {
   }, [version]);
 
   const reload = useCallback(() => setVersion((v) => v + 1), []);
+
+  // Coming back to the tab (e.g. after updating a report as admin in another tab) shows the
+  // latest reports.
+  useEffect(() => {
+    window.addEventListener('focus', reload);
+    return () => window.removeEventListener('focus', reload);
+  }, [reload]);
+
   return { reports, loading, error, reload };
 }

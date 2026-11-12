@@ -131,3 +131,37 @@ describe('admin dashboard', () => {
     expect(row.getAttribute('aria-current')).toBe('true');
   });
 });
+
+describe('updating a report', () => {
+  it('saves the new status, says so, and the list and map follow', async () => {
+    // A fake API that applies the PATCH to its copy of the reports.
+    let current = reports.map((r) => ({ ...r }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (init?.method === 'PATCH') {
+          const id = Number(url.split('/').pop());
+          const body = JSON.parse(String(init.body));
+          current = current.map((r) => (r.id === id ? { ...r, ...body } : r));
+          return Response.json(current.find((r) => r.id === id));
+        }
+        return Response.json({ reports: current });
+      }),
+    );
+    const container = renderAdmin('/admin?report=145');
+
+    const details = screen.getByRole('complementary', { name: 'Details' });
+    fireEvent.click(await within(details).findByLabelText('In progress'));
+    fireEvent.change(within(details).getByLabelText('Note to reporter (optional)'), {
+      target: { value: 'Crew booked for Friday.' },
+    });
+    fireEvent.click(within(details).getByRole('button', { name: 'Save and notify reporter' }));
+
+    expect((await within(details).findByRole('status')).textContent).toBe(
+      'Saved. The reporter will see this in Notifications.',
+    );
+    expect(await within(details).findByText('Crew booked for Friday.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'In progress 3' })).toBeTruthy();
+    expect(markers(container)).toContain('Cracked paving by the main gate, In progress');
+  });
+});

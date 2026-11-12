@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
+import { AdminReportDetail } from '../components/AdminReportDetail';
 import { SignOutIcon } from '../components/icons';
 import { MapView } from '../components/MapView';
 import { ReportList } from '../components/ReportList';
 import { StatusFilter, type StatusFilterValue } from '../components/StatusFilter';
-import { clearAdminToken } from '../lib/adminSession';
-import { reportNumber } from '../lib/reportText';
+import { clearAdminToken, getAdminToken } from '../lib/adminSession';
 import { useIsDesktop } from '../lib/useIsDesktop';
 import { useReports } from '../lib/useReports';
 import styles from './AdminPage.module.css';
@@ -14,7 +14,9 @@ import styles from './AdminPage.module.css';
 export function AdminPage() {
   const navigate = useNavigate();
   const isDesktop = useIsDesktop();
-  const { reports, loading, error } = useReports();
+  const { reports, loading, error, reload } = useReports();
+  // RequireAdmin only shows this page when there is a token.
+  const token = getAdminToken() ?? '';
   const [filter, setFilter] = useState<StatusFilterValue>('all');
 
   // As on the reporter side, the selected report lives in the URL (?report=142).
@@ -89,12 +91,18 @@ export function AdminPage() {
           </section>
 
           <aside className={styles.right} aria-label="Details">
-            {/* Temporary: the next step shows the details and the status controls here. */}
-            <p className={styles.hint}>
-              {selected
-                ? `${reportNumber(selected.id)} · ${selected.description}`
-                : 'Select a report in the list or on the map.'}
-            </p>
+            {selected ? (
+              <AdminReportDetail
+                key={selected.id}
+                report={selected}
+                token={token}
+                onClose={() => setSearchParams({})}
+                onSaved={reload}
+                onUnauthorized={signOut}
+              />
+            ) : (
+              <p className={styles.hint}>Select a report in the list or on the map.</p>
+            )}
           </aside>
         </div>
       ) : (
