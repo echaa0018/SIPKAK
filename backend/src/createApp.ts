@@ -11,7 +11,8 @@ export function createApp(store: Store = createMemoryStore()) {
   const app = express();
   const reports = createReportService(store);
 
-  app.use(express.json({ limit: '1mb' }));
+  // The photo (up to 10 MB) travels inside the JSON body, plus 1 MB for the other fields.
+  app.use(express.json({ limit: '11mb' }));
   app.use('/api', metaRouter);
   app.use('/api', reportsRouter(reports));
 

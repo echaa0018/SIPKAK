@@ -32,10 +32,10 @@ describe('errors', () => {
     expect(res.body.error.code).toBe('VALIDATION_ERROR');
   });
 
-  it('returns PAYLOAD_TOO_LARGE for bodies over 1 MB', async () => {
+  it('returns PAYLOAD_TOO_LARGE for bodies over 11 MB', async () => {
     const res = await request(app)
       .post('/api/health')
-      .send({ text: 'x'.repeat(1024 * 1024 + 1) });
+      .send({ text: 'x'.repeat(11 * 1024 * 1024 + 1) });
 
     expect(res.status).toBe(413);
     expect(res.body.error.code).toBe('PAYLOAD_TOO_LARGE');

@@ -34,4 +34,6 @@ export interface Store {
   /** Reports matching the filter (all of them without one), newest first. */
   listReports(filter?: ReportFilter): Promise<StoredReport[]>;
   getReport(id: number): Promise<StoredReport | undefined>;
+  /** Saves a new report and gives it the next id. */
+  createReport(report: Omit<StoredReport, 'id'>): Promise<StoredReport>;
 }

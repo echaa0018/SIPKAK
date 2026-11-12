@@ -1,5 +1,10 @@
 import { Router } from 'express';
-import { listReportsQuery, reportIdParams } from '../lib/validation.js';
+import {
+  createReportBody,
+  listReportsQuery,
+  reportIdParams,
+  requireReporterId,
+} from '../lib/validation.js';
 import type { ReportService } from '../services/reports.js';
 
 export function reportsRouter(reports: ReportService) {
@@ -14,6 +19,12 @@ export function reportsRouter(reports: ReportService) {
   router.get('/reports/:id', async (req, res) => {
     const { id } = reportIdParams.parse(req.params);
     res.json(await reports.get(id, req.get('X-Reporter-Id')));
+  });
+
+  router.post('/reports', async (req, res) => {
+    const reporterId = requireReporterId(req.get('X-Reporter-Id'));
+    const input = createReportBody.parse(req.body);
+    res.status(201).json(await reports.create(input, reporterId));
   });
 
   return router;

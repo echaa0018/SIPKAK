@@ -1,5 +1,12 @@
 import { AppError } from '../lib/errors.js';
+import type { CreateReportInput } from '../lib/validation.js';
 import type { ReportStatus, Store, StoredReport } from '../store/store.js';
+
+// Measured on the data URL string the client sends.
+export const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
+
+// SIMULATED: there is no real GPS, so every report gets this accuracy unless the client sends one.
+const SIMULATED_ACCURACY_M = 12;
 
 // The report shape the API sends: the stored report without reporterId, plus isMine.
 export type Report = Omit<StoredReport, 'reporterId'> & { isMine: boolean };
@@ -28,6 +35,31 @@ export function createReportService(store: Store) {
       const report = await store.getReport(id);
       if (!report) throw new AppError('NOT_FOUND', `Report ${id} not found`);
       return toApiReport(report, viewerId);
+    },
+
+    /** New reports always start as "waiting". */
+    async create(input: CreateReportInput, reporterId: string): Promise<Report> {
+      // SIMULATED: the photo travels inside the JSON body. The real app would upload it to
+      // Supabase Storage and keep only its URL.
+      if (input.photo && input.photo.length > MAX_PHOTO_BYTES) {
+        throw new AppError('PAYLOAD_TOO_LARGE', 'The photo is larger than 10 MB', {
+          photo: 'Larger than 10 MB',
+        });
+      }
+
+      const now = new Date().toISOString();
+      const report = await store.createReport({
+        ...input,
+        accuracyM: input.accuracyM ?? SIMULATED_ACCURACY_M,
+        status: 'waiting',
+        note: null,
+        confirmations: 0,
+        reporterId,
+        createdAt: now,
+        updatedAt: now,
+        history: [{ status: 'waiting', at: now }],
+      });
+      return toApiReport(report, reporterId);
     },
   };
 }

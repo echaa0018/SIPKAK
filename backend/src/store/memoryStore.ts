@@ -9,6 +9,7 @@ const newestFirst = (a: StoredReport, b: StoredReport) =>
 export function createMemoryStore(initial: StoredReport[] = seedReports): Store {
   // Work on a copy, and hand out copies, so nobody can change the seed or the store by accident.
   const reports = structuredClone(initial);
+  let nextId = Math.max(0, ...reports.map((r) => r.id)) + 1;
 
   return {
     async listReports({ status, reporterId } = {}) {
@@ -23,6 +24,12 @@ export function createMemoryStore(initial: StoredReport[] = seedReports): Store 
     async getReport(id) {
       const report = reports.find((r) => r.id === id);
       return report && structuredClone(report);
+    },
+
+    async createReport(input) {
+      const report = { ...structuredClone(input), id: nextId++ };
+      reports.push(report);
+      return structuredClone(report);
     },
   };
 }
