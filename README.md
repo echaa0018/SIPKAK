@@ -87,7 +87,7 @@ The project is built with a split frontend-backend architecture in one repositor
 
 - Campus map of ITB Ganesha with one marker per report, in three status styles: **Waiting for review** (orange dot), **In progress** (blue ring) and **Done** (grey circle with a check).
 - Report details with the photo, building and floor, a Reported / In progress / Done timeline, the latest note from facilities, and a **Same problem (+1)** button.
-- **Report damage** form with a draggable pin, "Use my location", photo upload (resized in the browser), building, floor and description, with validation messages next to each field.
+- **Report damage** form with a draggable pin, "Use my location" (the browser's GPS), a required photo (resized in the browser), building, floor and description, with validation messages next to each field.
 - **Duplicate warning**: 400 ms after the pin stops moving, the form looks for an open report within 30 m and offers a +1 instead of a new report.
 - **Report sent** pop-up with the report number and time, then **My reports** with each report's status.
 - **Notifications** with an unread badge, sent whenever facilities change a report's status or add a note.
@@ -104,7 +104,7 @@ These parts are simplified on purpose. Each one is marked in the code with a `//
 
 | Part | What SIPKAK does | What a real app would do |
 | --- | --- | --- |
-| Location | "Use my location" moves the pin to a fixed spot south of Aula Barat (±12 m). A "Simulate being at…" select jumps to any building. | Ask the browser's GPS (`navigator.geolocation`). |
+| Location | "Use my location" asks the browser's GPS (`navigator.geolocation`) and shows its accuracy; outside the campus map it asks you to place the pin. A "Simulate being at…" select still jumps to any building, for testing away from campus. | The same, without the simulate select. |
 | Map | One SVG drawn from OpenStreetMap, placed at its real coordinates with Leaflet. | Use a tile server. |
 | Photo | Resized in the browser (longest side 800 px, JPEG quality 0.7) and sent inside the JSON as a data URL. | Upload the file to storage (e.g. Supabase Storage) and keep only its URL. |
 | Admin sign-in | One shared password (`ADMIN_PASSWORD`) that returns a fixed token (`ADMIN_TOKEN`), kept in `sessionStorage`. | A real account per staff member with short-lived tokens. |
@@ -334,7 +334,7 @@ The base path is `/api`. Requests and responses are JSON, and every time is an I
 | GET | `/api/reports?status=&mine=true` | Reports, newest first. `status` is `waiting`, `in_progress` or `done`; `mine=true` needs `X-Reporter-Id` |
 | GET | `/api/reports/nearby?lat=&lng=&radius=30` | Open reports within `radius` metres (at most 100), nearest first, each with `distanceM` |
 | GET | `/api/reports/:id` | One report |
-| POST | `/api/reports` | Creates a report: `{description, building, floor?, lat, lng, accuracyM?, photo?}` |
+| POST | `/api/reports` | Creates a report: `{description, building, floor?, lat, lng, accuracyM?, photo}` |
 | POST | `/api/reports/:id/confirmations` | "Same problem (+1)". `409` if you already confirmed it or sent it yourself |
 | GET | `/api/notifications` | Your notifications, newest first, and the unread count |
 | POST | `/api/notifications/read` | Marks the given `ids` as read (all of them without ids) |
@@ -343,7 +343,7 @@ The base path is `/api`. Requests and responses are JSON, and every time is an I
 
 Reporters have no accounts: the frontend sends a UUID as `X-Reporter-Id`. It's required for creating a report, +1 and notifications, and optional on other GET requests, where it only sets `isMine`. The API never returns anyone's reporter ID.
 
-Validation rules: `description` is 5–280 characters, `building` must be a known building, `floor` is at most 20 characters, `lat` and `lng` must be inside the campus map, and `photo` must be a JPEG data URL of at most 10 MB.
+Validation rules: `description` is 5–280 characters, `building` must be a known building, `floor` is at most 20 characters, `lat` and `lng` must be inside the campus map, and `photo` is required and must be a JPEG data URL of at most 10 MB.
 
 ---
 
@@ -351,7 +351,7 @@ Validation rules: `description` is 5–280 characters, `building` must be a know
 
 ### Reporting Damage
 
-- The student opens **Report damage** and places the pin by dragging the map (phone), clicking the map (desktop), or using **Use my location**
+- The student opens **Report damage** and places the pin by dragging the map (phone), clicking the map (desktop), or using **Use my location** (the browser's GPS, after the student allows it)
 - The nearest building is picked automatically until the student chooses one
 - 400 ms after the pin stops, the app checks for open reports within 30 m and shows "Already reported N m away" with a **Same problem (+1)** button
 - The photo is resized in the browser before it is sent

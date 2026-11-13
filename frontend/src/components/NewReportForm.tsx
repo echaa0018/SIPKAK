@@ -1,7 +1,7 @@
 import { useEffect, useId, useState, type FormEvent } from 'react';
 import { ApiError } from '../api/client';
 import { createReport, listBuildings, type Building, type Report } from '../api/reports';
-import { simulatedPosition } from '../lib/campusMap';
+import { isInsideCampus, simulatedPosition } from '../lib/campusMap';
 import { distanceM, formatCoords, type LatLng } from '../lib/geo';
 import { resizeImage } from '../lib/resizeImage';
 import { useNearbyReport } from '../lib/useNearbyReport';
@@ -24,6 +24,24 @@ interface NewReportFormProps {
   /** After a "+1" from the duplicate warning: reload the counts. */
   onConfirmed: () => void;
   onClose?: () => void;
+}
+
+/** Where the current pin came from, and how accurate it is in metres. */
+interface PinSource {
+  pin: LatLng;
+  kind: 'gps' | 'simulated';
+  accuracyM: number;
+}
+
+/** A message for each way the browser can fail to give a position. */
+function locationErrorMessage(error: GeolocationPositionError): string {
+  if (error.code === error.PERMISSION_DENIED) {
+    return 'Location access is blocked. Allow it in your browser, or place the pin on the map.';
+  }
+  if (error.code === error.TIMEOUT) {
+    return 'Finding your location took too long. Try again, or place the pin on the map.';
+  }
+  return 'Couldn’t find your location. Try again, or place the pin on the map.';
 }
 
 /** The building whose centre is closest to the pin. */
@@ -72,6 +90,11 @@ export function NewReportForm(props: NewReportFormProps) {
   const [photo, setPhoto] = useState<string | null>(null);
   const [errors, setErrors] = useState<Errors>({});
   const [sending, setSending] = useState(false);
+  const [locating, setLocating] = useState(false);
+  // Set by "Use my location" or the simulate select. Moving the pin by hand makes it stale.
+  const [source, setSource] = useState<PinSource | null>(null);
+  const pinSource =
+    source && pin && source.pin.lat === pin.lat && source.pin.lng === pin.lng ? source : null;
 
   const nearby = useNearbyReport(pin);
   const building = chosenBuilding ?? nearestBuilding(pin, buildings);
@@ -82,13 +105,57 @@ export function NewReportForm(props: NewReportFormProps) {
 
   const placesToSimulate = buildings.filter((b) => b.lat !== null && b.lng !== null);
 
+  /** Moves the pin and remembers where it came from, so its accuracy can be shown and sent. */
+  function placePin(next: LatLng, kind: PinSource['kind'], accuracyM: number) {
+    setSource({ pin: next, kind, accuracyM });
+    setErrors((e) => ({ ...e, location: undefined }));
+    onPinChange(next);
+  }
+
+  /** "Use my location": asks the browser for a GPS fix (it asks you for permission first). */
+  function useMyLocation() {
+    if (!('geolocation' in navigator)) {
+      setErrors((e) => ({
+        ...e,
+        location: 'This browser can’t share your location. Place the pin on the map.',
+      }));
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        setLocating(false);
+        const here = { lat: coords.latitude, lng: coords.longitude };
+        if (!isInsideCampus(here)) {
+          setErrors((e) => ({
+            ...e,
+            location: 'You seem to be outside ITB Ganesha. Place the pin on the map instead.',
+          }));
+          return;
+        }
+        placePin(here, 'gps', Math.max(1, Math.round(coords.accuracy)));
+      },
+      (error) => {
+        setLocating(false);
+        setErrors((e) => ({ ...e, location: locationErrorMessage(error) }));
+      },
+      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 0 },
+    );
+  }
+
+  // For testing away from campus: "stands" at a fixed spot or at a building.
   function simulateAt(value: string) {
     if (value === 'default') {
-      onPinChange({ lat: simulatedPosition.lat, lng: simulatedPosition.lng });
+      placePin(
+        { lat: simulatedPosition.lat, lng: simulatedPosition.lng },
+        'simulated',
+        simulatedPosition.accuracyM,
+      );
       return;
     }
     const place = placesToSimulate.find((b) => b.name === value);
-    if (place) onPinChange({ lat: place.lat!, lng: place.lng! });
+    if (place)
+      placePin({ lat: place.lat!, lng: place.lng! }, 'simulated', simulatedPosition.accuracyM);
   }
 
   async function choosePhoto(file: File | undefined) {
@@ -105,12 +172,13 @@ export function NewReportForm(props: NewReportFormProps) {
     event.preventDefault();
     const problems: Errors = {};
     if (!pin) problems.location = 'Click the map to place your pin, or use your location.';
+    if (!photo) problems.photo = 'Add a photo of the damage.';
     if (!building) problems.building = 'Choose a building.';
     if (description.trim().length < 5) {
       problems.description = 'Tell us what’s wrong (at least 5 characters).';
     }
     setErrors(problems);
-    if (Object.keys(problems).length > 0 || !pin) return;
+    if (Object.keys(problems).length > 0 || !pin || !photo) return;
 
     setSending(true);
     try {
@@ -120,13 +188,15 @@ export function NewReportForm(props: NewReportFormProps) {
         floor: floor.trim() || null,
         lat: pin.lat,
         lng: pin.lng,
-        accuracyM: simulatedPosition.accuracyM,
+        // Only a GPS or simulated pin has a known accuracy; the API has a default otherwise.
+        ...(pinSource && { accuracyM: pinSource.accuracyM }),
         photo,
       });
       setChosenBuilding(null);
       setFloor('');
       setDescription('');
       setPhoto(null);
+      setSource(null);
       onSent(report);
     } catch (error) {
       setErrors(errorsFromApi(error));
@@ -178,19 +248,26 @@ export function NewReportForm(props: NewReportFormProps) {
             {!isPhone && <strong>Pin: </strong>}
             {pin ? formatCoords(pin) : 'not placed yet'}
             <span className={styles.muted}>
-              {pin ? `Accurate to ±${simulatedPosition.accuracyM} m` : 'Click the map to place it'}
+              {!pin
+                ? 'Click the map to place it'
+                : pinSource?.kind === 'gps'
+                  ? `Accurate to ±${pinSource.accuracyM} m`
+                  : pinSource?.kind === 'simulated'
+                    ? `Simulated, ±${pinSource.accuracyM} m`
+                    : 'Placed on the map'}
             </span>
           </p>
           <div className={styles.locate}>
             <button
               type="button"
               className={styles.secondary}
-              onClick={() => simulateAt('default')}
+              onClick={useMyLocation}
+              disabled={locating}
             >
               <CrosshairIcon size={20} />
-              Use my location
+              {locating ? 'Finding you…' : 'Use my location'}
             </button>
-            {/* SIMULATED: lets a tester "stand" at any building, since there is no real GPS. */}
+            {/* For testing away from campus: "stand" at any building without GPS. */}
             <select
               className={styles.simulate}
               value=""

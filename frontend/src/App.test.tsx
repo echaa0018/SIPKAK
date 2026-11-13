@@ -2,7 +2,12 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { MemoryRouter, useLocation } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
-import { makeReport } from './test/fixtures';
+import { makeReport, mockGeolocation } from './test/fixtures';
+
+// jsdom can't draw on a canvas, so pretend every photo resizes to this.
+vi.mock('./lib/resizeImage', () => ({
+  resizeImage: vi.fn(async () => 'data:image/jpeg;base64,RESIZED'),
+}));
 
 /** Pretends the window is phone-sized or desktop-sized (jsdom has no real matchMedia). */
 function setDesktop(isDesktop: boolean) {
@@ -298,8 +303,12 @@ describe('sending a report', () => {
   }
 
   async function fillAndSend() {
+    mockGeolocation({ lat: -6.89258, lng: 107.61015, accuracy: 12 });
     fireEvent.click(await screen.findByRole('button', { name: 'Use my location' }));
     await screen.findAllByRole('option', { name: 'Aula Barat' });
+    const file = new File(['fake'], 'window.jpg', { type: 'image/jpeg' });
+    fireEvent.change(screen.getByLabelText('Photo'), { target: { files: [file] } });
+    await screen.findByRole('img', { name: 'Preview of your photo' });
     fireEvent.change(screen.getByLabelText("What's wrong?"), {
       target: { value: 'Broken window in the stairwell' },
     });

@@ -40,7 +40,8 @@ export interface NewReport {
   lat: number;
   lng: number;
   accuracyM?: number;
-  photo?: string | null;
+  /** Required: a JPEG data URL from resizeImage(). */
+  photo: string;
 }
 
 export async function listReports(filter: { status?: ReportStatus; mine?: boolean } = {}) {

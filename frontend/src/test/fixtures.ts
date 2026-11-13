@@ -1,5 +1,36 @@
 import type { Report } from '../api/reports';
 
+/**
+ * Replaces navigator.geolocation (jsdom has none). Answers at once with a position,
+ * or with an error code (1 = permission denied, 2 = unavailable, 3 = timeout).
+ */
+export function mockGeolocation(
+  result: { lat: number; lng: number; accuracy: number } | { errorCode: 1 | 2 | 3 },
+) {
+  const geolocation = {
+    getCurrentPosition(
+      ok: (position: GeolocationPosition) => void,
+      fail?: (error: GeolocationPositionError) => void,
+    ) {
+      if ('errorCode' in result) {
+        fail?.({
+          code: result.errorCode,
+          message: '',
+          PERMISSION_DENIED: 1,
+          POSITION_UNAVAILABLE: 2,
+          TIMEOUT: 3,
+        } as GeolocationPositionError);
+        return;
+      }
+      ok({
+        coords: { latitude: result.lat, longitude: result.lng, accuracy: result.accuracy },
+        timestamp: Date.now(),
+      } as GeolocationPosition);
+    },
+  };
+  Object.defineProperty(navigator, 'geolocation', { configurable: true, value: geolocation });
+}
+
 /** A report for tests; override only the fields a test cares about. */
 export function makeReport(overrides: Partial<Report> = {}): Report {
   return {

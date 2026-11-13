@@ -107,6 +107,7 @@ describe('endpoint helpers', () => {
       building: 'Aula Barat',
       lat: -6.89,
       lng: 107.61,
+      photo: 'data:image/jpeg;base64,AAAA',
     };
 
     expect(await createReport(report)).toEqual({ id: 146 });

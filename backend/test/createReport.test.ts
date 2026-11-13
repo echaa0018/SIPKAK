@@ -5,15 +5,16 @@ import { MAX_PHOTO_BYTES } from '../src/services/reports.js';
 
 const reporterId = '11111111-1111-4111-8111-111111111111';
 
+const jpeg = (bytes: number) => 'data:image/jpeg;base64,' + 'A'.repeat(bytes);
+
 const validReport = {
   description: 'Broken window in the stairwell',
   building: 'Aula Barat',
   floor: '1',
   lat: -6.89258,
   lng: 107.61015,
+  photo: jpeg(100),
 };
-
-const jpeg = (bytes: number) => 'data:image/jpeg;base64,' + 'A'.repeat(bytes);
 
 let app: ReturnType<typeof createApp>;
 
@@ -35,7 +36,6 @@ describe('POST /api/reports', () => {
       id: 146,
       ...validReport,
       accuracyM: 12,
-      photo: null,
       status: 'waiting',
       note: null,
       confirmations: 0,
@@ -92,7 +92,15 @@ describe('POST /api/reports', () => {
       'floor',
       'lat',
       'lng',
+      'photo',
     ]);
+  });
+
+  it('needs a photo as evidence', async () => {
+    const res = await post({ ...validReport, photo: undefined });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.details).toEqual({ photo: 'Add a photo' });
   });
 
   it('rejects a point outside campus', async () => {

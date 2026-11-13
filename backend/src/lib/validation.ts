@@ -50,11 +50,10 @@ export const createReportBody = z.object({
     .min(mapBounds.west, 'Outside campus')
     .max(mapBounds.east, 'Outside campus'),
   accuracyM: z.number().positive().optional(),
+  // The photo is the evidence of the damage, so it is required (KF-02).
   photo: z
-    .string()
-    .startsWith('data:image/jpeg;base64,', 'Must be a JPEG data URL')
-    .nullish()
-    .transform((photo) => photo ?? null),
+    .string({ error: 'Add a photo' })
+    .startsWith('data:image/jpeg;base64,', 'Must be a JPEG data URL'),
 });
 
 export type CreateReportInput = z.infer<typeof createReportBody>;

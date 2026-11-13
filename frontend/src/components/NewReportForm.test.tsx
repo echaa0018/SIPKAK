@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Report } from '../api/reports';
 import type { LatLng } from '../lib/geo';
-import { makeReport } from '../test/fixtures';
+import { makeReport, mockGeolocation } from '../test/fixtures';
 import { NewReportForm } from './NewReportForm';
 
 // jsdom can't draw on a canvas, so pretend every photo resizes to this.
@@ -70,7 +70,20 @@ async function renderForm(onSent = vi.fn()) {
 
 const buildingSelect = () => screen.getByLabelText('Building') as HTMLSelectElement;
 
-beforeEach(() => fakeApi());
+/** Adds a photo, which every report needs as evidence. */
+async function addPhoto() {
+  const file = new File(['fake'], 'crack.jpg', { type: 'image/jpeg' });
+  fireEvent.change(screen.getByLabelText('Photo'), { target: { files: [file] } });
+  await screen.findByRole('img', { name: 'Preview of your photo' });
+}
+
+// "Use my location" finds you 26 m from the lamp report, ±12 m.
+const atAulaBarat = { lat: -6.89258, lng: 107.61015, accuracy: 12 };
+
+beforeEach(() => {
+  fakeApi();
+  mockGeolocation(atAulaBarat);
+});
 
 afterEach(() => {
   cleanup();
@@ -79,7 +92,7 @@ afterEach(() => {
 });
 
 describe('location', () => {
-  it('"Use my location" moves the pin to the simulated spot and picks the nearest building', async () => {
+  it('"Use my location" moves the pin to your GPS position and picks the nearest building', async () => {
     await renderForm();
 
     fireEvent.click(screen.getByRole('button', { name: 'Use my location' }));
@@ -100,6 +113,41 @@ describe('location', () => {
     expect(warning.textContent).toContain('Lamp by the east stairs is out');
     expect(screen.getByRole('button', { name: 'Same problem (+1)' })).toBeTruthy();
     expect(nearbyCalls()).toHaveLength(1);
+  });
+
+  it('shows the GPS accuracy it got', async () => {
+    mockGeolocation({ ...atAulaBarat, accuracy: 7.6 });
+    await renderForm();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Use my location' }));
+
+    expect(screen.getByText('Accurate to ±8 m')).toBeTruthy();
+  });
+
+  it('asks you to place the pin when location access is blocked', async () => {
+    mockGeolocation({ errorCode: 1 });
+    await renderForm();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Use my location' }));
+
+    expect(
+      screen.getByText(
+        'Location access is blocked. Allow it in your browser, or place the pin on the map.',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText('not placed yet')).toBeTruthy();
+  });
+
+  it('does not move the pin when you are outside the campus', async () => {
+    mockGeolocation({ lat: -6.9, lng: 107.6, accuracy: 10 });
+    await renderForm();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Use my location' }));
+
+    expect(
+      screen.getByText('You seem to be outside ITB Ganesha. Place the pin on the map instead.'),
+    ).toBeTruthy();
+    expect(screen.getByText('not placed yet')).toBeTruthy();
   });
 
   it('can "stand" at any building with the simulate select', async () => {
@@ -133,6 +181,7 @@ describe('validation', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send report' }));
 
     expect(screen.getByText('Click the map to place your pin, or use your location.')).toBeTruthy();
+    expect(screen.getByText('Add a photo of the damage.')).toBeTruthy();
     expect(screen.getByText('Choose a building.')).toBeTruthy();
     const description = screen.getByLabelText("What's wrong?");
     expect(description.getAttribute('aria-invalid')).toBe('true');
@@ -158,6 +207,7 @@ describe('validation', () => {
     await renderForm();
 
     fireEvent.click(screen.getByRole('button', { name: 'Use my location' }));
+    await addPhoto();
     fireEvent.change(screen.getByLabelText("What's wrong?"), {
       target: { value: 'Broken window' },
     });
@@ -187,6 +237,7 @@ describe('sending', () => {
     const { onSent } = await renderForm();
 
     fireEvent.click(screen.getByRole('button', { name: 'Use my location' }));
+    await addPhoto();
     fireEvent.change(screen.getByLabelText('Floor'), { target: { value: ' 1 ' } });
     fireEvent.change(screen.getByLabelText("What's wrong?"), {
       target: { value: '  Broken window in the stairwell ' },
@@ -202,10 +253,11 @@ describe('sending', () => {
       lat: -6.89258,
       lng: 107.61015,
       accuracyM: 12,
-      photo: null,
+      photo: 'data:image/jpeg;base64,RESIZED',
     });
     // The form is empty again for the next report.
     expect((screen.getByLabelText("What's wrong?") as HTMLTextAreaElement).value).toBe('');
+    expect(screen.queryByRole('img', { name: 'Preview of your photo' })).toBeNull();
   });
 });
 
