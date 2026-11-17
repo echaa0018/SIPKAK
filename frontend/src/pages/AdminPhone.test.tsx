@@ -100,7 +100,8 @@ describe('admin on the phone', () => {
     expect(within(nav()).getByRole('link', { name: 'Reports' }).getAttribute('aria-current')).toBe(
       'page',
     );
-    expect(await screen.findByRole('button', { name: 'All 3' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'All (3)' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Approved (3)' }));
     fireEvent.click(screen.getByRole('button', { name: 'Done 1' }));
     expect(screen.getAllByRole('listitem')).toHaveLength(1);
   });

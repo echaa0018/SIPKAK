@@ -4,6 +4,7 @@ import type { Report } from '../api/reports';
 import type { LatLng } from '../lib/geo';
 import styles from './DesktopLayout.module.css';
 import { PlusIcon } from './icons';
+import { notifyReportsChanged } from '../lib/reportSync';
 import { MapView } from './MapView';
 import { MyReportsList } from './MyReportsList';
 import { NewReportForm } from './NewReportForm';
@@ -24,7 +25,7 @@ const plural = (n: number) => (n === 1 ? '1 report' : `${n} reports`);
 
 /** Desktop layout: a header, then three panes (list tabs, map, details) split by thin lines. */
 export function DesktopLayout(props: LayoutProps) {
-  const { view, reports, loading, loadError, selected, onSelect, onCloseSelected, reload } = props;
+  const { view, reports, mineReports, loading, loadError, selected, onSelect, onCloseSelected, reload } = props;
   const { notifications, unread, onOpenNotification } = props;
   // The left pane shows My reports or Notifications on those URLs, and all reports otherwise
   // (on /list and /report/new too).
@@ -41,10 +42,13 @@ export function DesktopLayout(props: LayoutProps) {
         <p className={styles.brand}>
           <strong>SIPKAK</strong> <span>Campus damage reports · ITB Ganesha</span>
         </p>
-        <Link to="/report/new" className={styles.reportButton}>
-          <PlusIcon size={20} />
-          Report damage
-        </Link>
+        <div className={styles.headerActions}>
+          <Link to="/admin" className={styles.adminLink}>Admin login</Link>
+          <Link to="/report/new" className={styles.reportButton}>
+            <PlusIcon size={20} />
+            Report damage
+          </Link>
+        </div>
       </header>
 
       <div className={styles.panes}>
@@ -75,7 +79,7 @@ export function DesktopLayout(props: LayoutProps) {
           )}
           {leftTab === 'mine' && (
             <MyReportsList
-              reports={reports}
+              reports={mineReports}
               loading={loading}
               onSelect={onSelect}
               selectedId={selected?.id}
@@ -115,7 +119,8 @@ export function DesktopLayout(props: LayoutProps) {
               reports={reports}
               onSent={(report) => {
                 setPin(null);
-                reload(); // so the new marker is on the map behind the pop-up
+                reload(); // only approved reports appear on the public map
+                notifyReportsChanged(); // tell the admin tab about this pending report
                 setSent(report);
               }}
               onConfirmed={reload}
@@ -135,7 +140,7 @@ export function DesktopLayout(props: LayoutProps) {
           variant="desktop"
           onClose={() => {
             setSent(null);
-            onSelect(sent.id); // the right pane then shows the new report
+            navigate('/'); // closing doesn't put an unpublished report on the public map
           }}
           onSeeMine={() => {
             setSent(null);

@@ -1,6 +1,7 @@
-import { request } from './client';
+import { ApiError, request } from './client';
 
 export type ReportStatus = 'waiting' | 'in_progress' | 'done';
+export type ReviewStatus = 'pending' | 'approved' | 'rejected';
 
 export interface Report {
   id: number;
@@ -13,6 +14,7 @@ export interface Report {
   /** A JPEG data URL, or null. */
   photo: string | null;
   status: ReportStatus;
+  reviewStatus: ReviewStatus;
   /** The latest note from facilities. */
   note: string | null;
   confirmations: number;
@@ -49,7 +51,11 @@ export async function listReports(filter: { status?: ReportStatus; mine?: boolea
   if (filter.status) query.set('status', filter.status);
   if (filter.mine) query.set('mine', 'true');
   const search = query.toString();
-  return (await request<{ reports: Report[] }>(search ? `/reports?${search}` : '/reports')).reports;
+  const result = await request<{ reports: Report[] }>(search ? `/reports?${search}` : '/reports');
+  if (!result || !Array.isArray(result.reports)) {
+    throw new ApiError(0, 'INVALID_RESPONSE', 'The server returned invalid reports data.');
+  }
+  return result.reports;
 }
 
 export function getReport(id: number) {

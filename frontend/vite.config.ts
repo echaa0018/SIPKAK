@@ -4,9 +4,10 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 5173,
-    // In development the backend runs separately on port 3001.
-    proxy: { '/api': 'http://localhost:3001' },
+    port: 5181,
+    strictPort: true,
+    // A dedicated API port prevents old and new SIPKAK instances from being mixed.
+    proxy: { '/api': 'http://localhost:3011' },
   },
   test: { environment: 'jsdom' },
 });

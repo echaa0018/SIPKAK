@@ -29,12 +29,15 @@ export function createReportService(store: Store) {
         });
       }
       const reports = await store.listReports({ status, reporterId: mine ? viewerId : undefined });
-      return reports.map((report) => toApiReport(report, viewerId));
+      return reports.filter((report) => mine || report.reviewStatus === 'approved')
+        .map((report) => toApiReport(report, viewerId));
     },
 
     async get(id: number, viewerId?: string): Promise<Report> {
       const report = await store.getReport(id);
-      if (!report) throw new AppError('NOT_FOUND', `Report ${id} not found`);
+      if (!report || (report.reviewStatus !== 'approved' && report.reporterId !== viewerId)) {
+        throw new AppError('NOT_FOUND', `Report ${id} not found`);
+      }
       return toApiReport(report, viewerId);
     },
 
@@ -53,6 +56,7 @@ export function createReportService(store: Store) {
         ...input,
         accuracyM: input.accuracyM ?? SIMULATED_ACCURACY_M,
         status: 'waiting',
+        reviewStatus: 'pending',
         note: null,
         confirmations: 0,
         reporterId,
@@ -70,7 +74,7 @@ export function createReportService(store: Store) {
     ): Promise<(Report & { distanceM: number })[]> {
       const reports = await store.listReports();
       return reports
-        .filter((report) => report.status !== 'done')
+        .filter((report) => report.reviewStatus === 'approved' && report.status !== 'done')
         .map((report) => ({ report, distance: distanceM(point, report) }))
         .filter(({ distance }) => distance <= point.radius)
         .sort((a, b) => a.distance - b.distance)
@@ -84,6 +88,7 @@ export function createReportService(store: Store) {
     async confirm(id: number, reporterId: string): Promise<{ confirmations: number }> {
       const report = await store.getReport(id);
       if (!report) throw new AppError('NOT_FOUND', `Report ${id} not found`);
+      if (report.reviewStatus !== 'approved') throw new AppError('NOT_FOUND', `Report ${id} not found`);
       if (report.reporterId === reporterId) {
         throw new AppError('CONFLICT', 'You sent this report, so you cannot confirm it');
       }
@@ -95,6 +100,32 @@ export function createReportService(store: Store) {
       return { confirmations };
     },
 
+    /** Admin's full queue, including unpublished pending and rejected reports. */
+    async adminList(): Promise<Report[]> {
+      return (await store.listReports()).map((r) => toApiReport(r));
+    },
+
+    /** Only pending reports may be approved or rejected. Rejection requires an explanation. */
+    async review(id: number, decision: 'approved' | 'rejected', reason?: string): Promise<Report> {
+      const existing = await store.getReport(id);
+      if (!existing) throw new AppError('NOT_FOUND', `Report ${id} not found`);
+      if (existing.reviewStatus !== 'pending') {
+        throw new AppError('CONFLICT', 'This report has already been reviewed');
+      }
+      const at = new Date().toISOString();
+      const note = decision === 'rejected' ? reason!.trim() : null;
+      const updated = await store.reviewReport(id, decision, note, at);
+      if (!updated) throw new AppError('CONFLICT', 'This report has already been reviewed');
+      await store.createNotification({
+        reporterId: existing.reporterId, reportId: id, kind: 'note', status: null,
+        note: decision === 'approved'
+          ? 'Your report was approved and is now visible on the campus map.'
+          : `Your report was rejected: ${note}`,
+        createdAt: at,
+      });
+      return toApiReport(updated);
+    },
+
     /**
      * Admin update. Setting the status it already has, with no note, is rejected.
      * Every update sends the reporter one notification.
@@ -102,6 +133,9 @@ export function createReportService(store: Store) {
     async update(id: number, { status, note }: UpdateReportInput): Promise<Report> {
       const report = await store.getReport(id);
       if (!report) throw new AppError('NOT_FOUND', `Report ${id} not found`);
+      if (report.reviewStatus !== 'approved') {
+        throw new AppError('CONFLICT', 'Approve this report before updating repair status');
+      }
 
       const statusChanged = status !== undefined && status !== report.status;
       if (!statusChanged && note === undefined) {

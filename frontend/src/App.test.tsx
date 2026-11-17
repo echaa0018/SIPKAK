@@ -280,13 +280,15 @@ describe('sending a report', () => {
     note: null,
     confirmations: 0,
     isMine: true,
+    reviewStatus: 'pending',
     createdAt: '2026-11-11T04:32:00Z',
     history: [{ status: 'waiting', at: '2026-11-11T04:32:00Z' }],
   });
 
   /** A fake API where the list gains the new report once it is posted. */
   function fakeApi() {
-    let list = [...reports];
+    const list = [...reports];
+    let mine = reports.filter((r) => r.isMine);
     stubApi((url, init) => {
       if (url === '/api/buildings') {
         return Response.json({
@@ -295,9 +297,10 @@ describe('sending a report', () => {
       }
       if (url.startsWith('/api/reports/nearby')) return Response.json({ reports: [] });
       if (url === '/api/reports' && init?.method === 'POST') {
-        list = [created, ...list];
+        mine = [created, ...mine];
         return Response.json(created, { status: 201 });
       }
+      if (url === '/api/reports?mine=true') return Response.json({ reports: mine });
       return Response.json({ reports: list });
     });
   }
@@ -316,7 +319,7 @@ describe('sending a report', () => {
     return screen.findByRole('dialog', { name: 'Report sent' });
   }
 
-  it('shows "Report sent" with the number and time, and a new orange marker', async () => {
+  it('shows the report number and pending verification without publishing a marker', async () => {
     fakeApi();
     setDesktop(true);
     renderAt('/report/new');
@@ -324,18 +327,11 @@ describe('sending a report', () => {
     const dialog = await fillAndSend();
 
     expect(within(dialog).getByText('#0146 · 11/11/2026 · 11:32 WIB')).toBeTruthy();
-    // While the form is open the markers aren't buttons (clicks place your pin), so look them up
-    // by their label.
-    await waitFor(() =>
-      expect(
-        document.querySelector(
-          '[aria-label="Broken window in the stairwell, Waiting for review"] [class*="waiting"]',
-        ),
-      ).toBeTruthy(),
-    );
+    expect(within(dialog).getByText(/pending verification/)).toBeTruthy();
+    expect(document.querySelector('[aria-label^="Broken window in the stairwell,"]')).toBeNull();
   });
 
-  it('"Close" on desktop shows the new report in the right pane', async () => {
+  it('"Close" on desktop goes back to the public map without publishing a marker', async () => {
     fakeApi();
     setDesktop(true);
     renderAt('/report/new');
@@ -343,13 +339,9 @@ describe('sending a report', () => {
     const dialog = await fillAndSend();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
 
-    expect(currentUrl()).toBe('/?report=146');
+    expect(currentUrl()).toBe('/');
     expect(screen.queryByRole('dialog')).toBeNull();
-    expect(
-      await within(screen.getByRole('complementary', { name: 'Details' })).findByText(
-        'Report #0146',
-      ),
-    ).toBeTruthy();
+    expect(screen.queryByText('Report #0146')).toBeNull();
   });
 
   it('"See it in My reports" on the phone opens My reports', async () => {
@@ -364,7 +356,7 @@ describe('sending a report', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('"Back to map" on the phone opens the new report on the map', async () => {
+  it('"Back to map" on the phone returns to the public map without showing pending', async () => {
     fakeApi();
     setDesktop(false);
     renderAt('/report/new');
@@ -372,8 +364,8 @@ describe('sending a report', () => {
     const dialog = await fillAndSend();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Back to map' }));
 
-    expect(currentUrl()).toBe('/?report=146');
-    expect(await screen.findByRole('article', { name: 'Report #0146' })).toBeTruthy();
+    expect(currentUrl()).toBe('/');
+    expect(screen.queryByRole('article', { name: 'Report #0146' })).toBeNull();
   });
 });
 
@@ -484,5 +476,18 @@ describe('notifications', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+
+describe('public admin entry', () => {
+  it('opens admin sign-in from the reporter phone navigation', () => {
+    setDesktop(false);
+    sessionStorage.removeItem('sipkak.adminToken');
+    renderAt('/');
+    fireEvent.click(screen.getByRole('link', { name: 'Admin' }));
+    expect(currentUrl()).toBe('/admin/login');
+    expect(screen.getByLabelText('Username')).toBeTruthy();
+    expect(screen.getByLabelText('Password')).toBeTruthy();
   });
 });

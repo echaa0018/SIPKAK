@@ -1,5 +1,5 @@
-import { useId, useState, type FormEvent } from 'react';
-import { updateReport } from '../api/admin';
+import { useEffect, useId, useState, type FormEvent } from 'react';
+import { reviewReport, updateReport } from '../api/admin';
 import { ApiError } from '../api/client';
 import type { Report, ReportStatus } from '../api/reports';
 import { formatWib } from '../lib/formatWib';
@@ -18,7 +18,7 @@ interface AdminReportDetailProps {
   onClose?: () => void;
   /** After a save: reload the reports so the list and map show the new status. */
   onSaved: () => void;
-  /** The token was refused (e.g. the backend's ADMIN_TOKEN changed): sign in again. */
+  /** The admin session expired or was refused: sign in again. */
   onUnauthorized: () => void;
   /** The phone page leaves out the pin coordinates, as in its wireframe. */
   showPin?: boolean;
@@ -33,6 +33,8 @@ export function AdminReportDetail(props: AdminReportDetailProps) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ kind: 'saved' | 'error'; text: string } | null>(null);
   const [photoOpen, setPhotoOpen] = useState(false);
+  const [reason, setReason] = useState('');
+  useEffect(() => setStatus(report.status), [report.status]);
 
   async function save(event: FormEvent) {
     event.preventDefault();
@@ -59,6 +61,26 @@ export function AdminReportDetail(props: AdminReportDetailProps) {
         return;
       }
       setMessage({ kind: 'error', text: 'Couldn’t save. Try again.' });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function decide(decision: 'approved' | 'rejected') {
+    if (decision === 'rejected' && reason.trim().length < 5) {
+      setMessage({ kind: 'error', text: 'Please explain the rejection (at least 5 characters).' });
+      return;
+    }
+    setSaving(true);
+    setMessage(null);
+    try {
+      await reviewReport(token, report.id, decision === 'approved'
+        ? { decision } : { decision, reason: reason.trim() });
+      setMessage({ kind: 'saved', text: `Report ${decision}. Reporter notified.` });
+      onSaved();
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) { onUnauthorized(); return; }
+      setMessage({ kind: 'error', text: 'Could not review this report. Refresh and retry.' });
     } finally {
       setSaving(false);
     }
@@ -94,6 +116,9 @@ export function AdminReportDetail(props: AdminReportDetailProps) {
       </div>
 
       <dl className={styles.facts}>
+        <dt>Verification</dt>
+        <dd>{report.reviewStatus === 'pending' ? 'Pending — not reviewed' : report.reviewStatus === 'approved' ? 'Approved' : 'Rejected'}</dd>
+        {report.reviewStatus === 'approved' && <><dt>Repair progress</dt><dd>{statusLabels[report.status].short}</dd></>}
         <dt>Reported</dt>
         <dd>{formatWib(report.createdAt)}</dd>
         <dt>Confirmed</dt>
@@ -112,6 +137,22 @@ export function AdminReportDetail(props: AdminReportDetailProps) {
         )}
       </dl>
 
+      {report.reviewStatus === 'pending' && (
+        <section className={styles.form} aria-label="Report verification">
+          <strong>Pending verification — not visible publicly</strong>
+          <p className={styles.muted}>Check the photo and location before publishing this report.</p>
+          <label className={styles.label} htmlFor={`${id}-reason`}>Rejection reason</label>
+          <textarea id={`${id}-reason`} className={styles.textarea} rows={2} maxLength={500}
+            value={reason} onChange={(e) => setReason(e.target.value)}
+            placeholder="Explain why this report is invalid" />
+          <button type="button" className={styles.primary} disabled={saving}
+            onClick={() => void decide('approved')}>Approve and publish</button>
+          <button type="button" className={styles.secondary} disabled={saving}
+            onClick={() => void decide('rejected')}>Reject report</button>
+        </section>
+      )}
+      {report.reviewStatus === 'rejected' && <p><strong>Rejected.</strong> {report.note}</p>}
+      {report.reviewStatus === 'approved' && (
       <form className={styles.form} onSubmit={save} noValidate>
         <fieldset className={styles.statusField}>
           <legend className={styles.label}>Status</legend>
@@ -170,6 +211,8 @@ export function AdminReportDetail(props: AdminReportDetailProps) {
           </p>
         )}
       </form>
+      )}
+      {report.reviewStatus !== 'approved' && message && <p role={message.kind === 'saved' ? 'status' : 'alert'} className={message.kind === 'saved' ? styles.saved : styles.error}>{message.text}</p>}
 
       {photoOpen && report.photo && (
         <Dialog

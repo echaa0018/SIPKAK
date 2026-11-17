@@ -81,3 +81,9 @@
   color: var(--warning);
   font-size: 14px;
 }
+
+/* A small staff-only entry in the reporter header; the four reporter tabs stay unchanged. */
+.headerContent { display: flex; align-items: center; justify-content: space-between; flex: 1; min-width: 0; gap: 8px; }
+.adminEntry { display: inline-flex; align-items: center; flex-shrink: 0; gap: 4px; color: var(--muted); font-size: 13px; font-weight: 600; text-decoration: none; padding: 8px 4px; }
+.adminEntry:hover { color: var(--ink); text-decoration: underline; }
+@media (max-width: 480px) { .brand span { display: none; } .switchItem { min-width: 44px; padding: 0 9px; } }

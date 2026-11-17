@@ -51,14 +51,15 @@ export function ReportDetail({ report, onClose, onConfirmed }: ReportDetailProps
         <p className={styles.place}>{formatPlace(report)}</p>
       </div>
 
-      <ol className={styles.timeline} aria-label="Progress">
+      {report.reviewStatus !== 'approved' && <p><strong>{report.reviewStatus === 'pending' ? 'Pending verification' : 'Rejected'}</strong>{report.reviewStatus === 'rejected' && report.note ? `: ${report.note}` : ''}</p>}
+      {report.reviewStatus === 'approved' && <ol className={styles.timeline} aria-label="Progress">
         {timeline(report).map((step) => (
           <li key={step.label} className={step.reached ? styles.reached : undefined}>
             <span className={styles.stepLabel}>{step.label}</span>
             <span className={styles.stepWhen}>{step.when}</span>
           </li>
         ))}
-      </ol>
+      </ol>}
 
       <FacilitiesNote note={report.note} />
 

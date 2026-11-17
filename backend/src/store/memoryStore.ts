@@ -16,6 +16,7 @@ export function createMemoryStore(): Store {
   let nextNotificationId = nextIdAfter(notifications);
   // Who confirmed what, as "reportId:reporterId". The seed only has counts, not names.
   const confirmed = new Set<string>();
+  const attempts: { source: string; reporter: string; at: number }[] = [];
 
   return {
     kind: 'memory',
@@ -32,6 +33,26 @@ export function createMemoryStore(): Store {
     async getReport(id) {
       const report = reports.find((r) => r.id === id);
       return report && structuredClone(report);
+    },
+
+    async allowSubmission(source, reporter, now) {
+      const windowStart = now - 10 * 60 * 1000;
+      for (let i = attempts.length - 1; i >= 0; i--) {
+        if (attempts[i].at <= windowStart) attempts.splice(i, 1);
+      }
+      if (attempts.filter((a) => a.source === source).length >= 10 ||
+          attempts.filter((a) => a.reporter === reporter).length >= 3) return false;
+      attempts.push({ source, reporter, at: now });
+      return true;
+    },
+
+    async reviewReport(id, reviewStatus, note, at) {
+      const report = reports.find((r) => r.id === id);
+      if (!report || report.reviewStatus !== 'pending') return undefined;
+      report.reviewStatus = reviewStatus;
+      if (note !== null) report.note = note;
+      report.updatedAt = at;
+      return structuredClone(report);
     },
 
     async createReport(input) {

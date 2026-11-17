@@ -4,6 +4,7 @@
 // It creates one report and updates it, using fresh random reporter ids each run.
 
 const API_URL = (process.env.API_URL ?? 'http://localhost:3001').replace(/\/$/, '');
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME ?? 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'sipkak-admin';
 
 const reporter = crypto.randomUUID();
@@ -92,7 +93,7 @@ await check('POST /api/reports rejects an empty description', async () => {
 });
 
 await check('GET /api/reports/:id returns the new report', async () => {
-  const res = await call('GET', `/api/reports/${created.id}`);
+  const res = await call('GET', `/api/reports/${created.id}`, { reporterId: reporter });
   return expectEqual('description', res.body?.description, 'Smoke test: broken window');
 });
 
@@ -104,6 +105,24 @@ await check('GET /api/reports/:id returns 404 for an unknown id', async () => {
 await check('GET /api/reports?mine=true includes the new report', async () => {
   const res = await call('GET', '/api/reports?mine=true', { reporterId: reporter });
   return res.body.reports.some((r) => r.id === created.id) ? undefined : 'not in mine';
+});
+
+await check('POST /api/admin/login rejects a wrong password', async () => {
+  const res = await call('POST', '/api/admin/login', { body: { username: ADMIN_USERNAME, password: 'wrong-password' } });
+  return expectEqual('status', res.status, 401);
+});
+
+await check('POST /api/admin/login returns a token', async () => {
+  const res = await call('POST', '/api/admin/login', { body: { username: ADMIN_USERNAME, password: ADMIN_PASSWORD } });
+  token = res.body?.token;
+  return token ? undefined : `status ${res.status} (are ADMIN_USERNAME and ADMIN_PASSWORD right?)`;
+});
+
+await check('PATCH /api/admin/reports/:id/review approves the pending report', async () => {
+  const res = await call('PATCH', `/api/admin/reports/${created.id}/review`, {
+    token, body: { decision: 'approved' },
+  });
+  return expectEqual('review status', res.body?.reviewStatus, 'approved');
 });
 
 await check('GET /api/reports/nearby finds the new report', async () => {
@@ -125,16 +144,6 @@ await check('POST /api/reports/:id/confirmations counts a +1 once', async () => 
   );
 });
 
-await check('POST /api/admin/login rejects a wrong password', async () => {
-  const res = await call('POST', '/api/admin/login', { body: { password: 'wrong-password' } });
-  return expectEqual('status', res.status, 401);
-});
-
-await check('POST /api/admin/login returns a token', async () => {
-  const res = await call('POST', '/api/admin/login', { body: { password: ADMIN_PASSWORD } });
-  token = res.body?.token;
-  return token ? undefined : `status ${res.status} (is ADMIN_PASSWORD right?)`;
-});
 
 await check('PATCH /api/admin/reports/:id needs a token', async () => {
   const res = await call('PATCH', `/api/admin/reports/${created.id}`, {

@@ -1,6 +1,8 @@
 import { Link } from 'react-router';
 import type { Report } from '../api/reports';
+import { PlusIcon } from './icons';
 import { ReportList } from './ReportList';
+import styles from './MyReportsList.module.css';
 
 interface MyReportsListProps {
   reports: Report[];
@@ -28,7 +30,10 @@ export function MyReportsList({ reports, variant, ...rest }: MyReportsListProps)
       empty={
         <>
           <p>You haven’t sent any reports yet.</p>
-          <Link to="/report/new">Report damage</Link>
+          <Link to="/report/new" className={styles.reportButton}>
+            <PlusIcon size={18} />
+            Report damage
+          </Link>
         </>
       }
     />

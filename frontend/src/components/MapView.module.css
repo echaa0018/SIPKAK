@@ -84,3 +84,18 @@
 .desktop .credit {
   border-radius: 4px 0 0 0;
 }
+
+.pendingKey, .rejectedKey {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-weight: 700;
+  border: 2px solid currentColor;
+}
+.pendingKey { color: #87520e; }
+.rejectedKey { color: #92362f; }
+/* Keep the admin's five map-legend entries readable on a narrow phone. */
+.phone .legend { flex-wrap: wrap; max-width: calc(100vw - 20px); }

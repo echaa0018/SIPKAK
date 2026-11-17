@@ -1,15 +1,19 @@
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../src/createApp.js';
+import { login } from '../src/services/admin.js';
 
 const password = 'test-password';
-const token = 'test-token';
+let token: string;
 
 let app: ReturnType<typeof createApp>;
 
 beforeEach(() => {
+  vi.stubEnv('ADMIN_USERNAME', 'facilities');
   vi.stubEnv('ADMIN_PASSWORD', password);
-  vi.stubEnv('ADMIN_TOKEN', token);
+  vi.stubEnv('ADMIN_SESSION_SECRET', 'secret-for-automated-admin-test');
+  vi.stubEnv('ADMIN_USERS_JSON', '');
+  token = login('facilities', password);
   app = createApp();
 });
 
@@ -24,14 +28,14 @@ const patch = (id: number, body: object, auth: string | null = `Bearer ${token}`
 
 describe('POST /api/admin/login', () => {
   it('returns the token for the right password', async () => {
-    const res = await request(app).post('/api/admin/login').send({ password });
+    const res = await request(app).post('/api/admin/login').send({ username: 'facilities', password });
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ token });
   });
 
   it('returns UNAUTHORIZED for a wrong password', async () => {
-    const res = await request(app).post('/api/admin/login').send({ password: 'guess' });
+    const res = await request(app).post('/api/admin/login').send({ username: 'facilities', password: 'guess' });
 
     expect(res.status).toBe(401);
     expect(res.body.error.code).toBe('UNAUTHORIZED');
@@ -39,16 +43,16 @@ describe('POST /api/admin/login', () => {
 
   it('returns UNAUTHORIZED when no admin password is configured', async () => {
     vi.stubEnv('ADMIN_PASSWORD', '');
-    const res = await request(app).post('/api/admin/login').send({ password });
+    const res = await request(app).post('/api/admin/login').send({ username: 'facilities', password });
 
     expect(res.status).toBe(401);
   });
 
-  it('needs a password in the body', async () => {
+  it('needs both username and password in the body', async () => {
     const res = await request(app).post('/api/admin/login').send({});
 
     expect(res.status).toBe(400);
-    expect(res.body.error.details).toEqual({ password: 'Required' });
+    expect(res.body.error.details).toEqual({ username: 'Required', password: 'Required' });
   });
 });
 
@@ -111,5 +115,41 @@ describe('PATCH /api/admin/reports/:id', () => {
     const res = await patch(9999, { status: 'done' });
 
     expect(res.status).toBe(404);
+  });
+});
+
+
+describe('individual administrator sessions', () => {
+  it('accepts distinct accounts and rejects wrong username/password combinations', async () => {
+    vi.stubEnv('ADMIN_USERS_JSON', JSON.stringify([
+      { username: 'operator1', password: 'password-one' },
+      { username: 'operator2', password: 'password-two' },
+    ]));
+    const first = await request(app).post('/api/admin/login')
+      .send({ username: 'operator1', password: 'password-one' });
+    const second = await request(app).post('/api/admin/login')
+      .send({ username: 'operator2', password: 'password-two' });
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    expect(first.body.token).not.toBe(second.body.token);
+    const adminList = (tokenValue: string) => request(app).get('/api/admin/reports')
+      .set('Authorization', `Bearer ${tokenValue}`);
+    expect((await adminList(first.body.token)).status).toBe(200);
+    expect((await adminList(second.body.token)).status).toBe(200);
+    expect((await request(app).post('/api/admin/login')
+      .send({ username: 'operator1', password: 'password-two' })).status).toBe(401);
+  });
+
+  it('rejects tampered or expired sessions', async () => {
+    const tampered = `${token.slice(0, -1)}${token.endsWith('A') ? 'B' : 'A'}`;
+    expect((await request(app).get('/api/admin/reports')
+      .set('Authorization', `Bearer ${tampered}`)).status).toBe(401);
+    const dateNow = vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 13 * 60 * 60 * 1000);
+    try {
+      expect((await request(app).get('/api/admin/reports')
+        .set('Authorization', `Bearer ${token}`)).status).toBe(401);
+    } finally {
+      dateNow.mockRestore();
+    }
   });
 });

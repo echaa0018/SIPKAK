@@ -62,3 +62,19 @@
   background: #fff;
   color: var(--status-done);
 }
+
+/* Admin-only verification indicators; existing repair markers are unchanged. */
+.pending {
+  background: #fff6e7;
+  border-color: #c17a20;
+  color: #87520e;
+  font-size: 13px;
+  font-weight: 800;
+}
+.rejected {
+  background: #fff1f0;
+  border-color: #a64a44;
+  color: #92362f;
+  font-size: 18px;
+  font-weight: 700;
+}

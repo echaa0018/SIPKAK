@@ -1,4 +1,5 @@
 export type ReportStatus = 'waiting' | 'in_progress' | 'done';
+export type ReviewStatus = 'pending' | 'approved' | 'rejected';
 
 export interface StatusChange {
   status: ReportStatus;
@@ -16,6 +17,7 @@ export interface StoredReport {
   accuracyM: number;
   photo: string | null;
   status: ReportStatus;
+  reviewStatus: ReviewStatus;
   note: string | null;
   confirmations: number;
   reporterId: string;
@@ -64,6 +66,11 @@ export interface Store {
     id: number,
     update: { status?: ReportStatus; note?: string; at: string },
   ): Promise<StoredReport | undefined>;
+  /** A review decision is independent of the repair status. */
+  reviewReport(id: number, reviewStatus: 'approved' | 'rejected', note: string | null, at: string): Promise<StoredReport | undefined>;
+  /** Atomic, server-side rate-limit reservation; false means the client must wait. */
+  allowSubmission(sourceHash: string, reporterHash: string, now: number): Promise<boolean>;
+
 
   /** This reporter's notifications, newest first. */
   listNotifications(reporterId: string): Promise<StoredNotification[]>;

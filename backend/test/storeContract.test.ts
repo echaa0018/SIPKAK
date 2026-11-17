@@ -44,6 +44,7 @@ function newReport(overrides: Partial<StoredReport> = {}): Omit<StoredReport, 'i
     accuracyM: 12,
     photo: null,
     status: 'waiting',
+    reviewStatus: 'approved',
     note: null,
     confirmations: 0,
     reporterId: owner,

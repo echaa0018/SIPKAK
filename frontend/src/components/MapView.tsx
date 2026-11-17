@@ -31,6 +31,8 @@ interface MapViewProps {
   pinPicking?: { pin: LatLng | null; onChange: (pin: LatLng) => void };
   /** Shows the selected report's description in a label above its pin (the admin map). */
   labelSelected?: boolean;
+  /** Admin markers identify unverified/rejected reports distinctly from repair progress. */
+  showVerification?: boolean;
 }
 
 /**
@@ -61,6 +63,7 @@ export function MapView({
   onSelect,
   pinPicking,
   labelSelected = false,
+  showVerification = false,
 }: MapViewProps) {
   const isPhone = variant === 'phone';
   const markersReact = !pinPicking;
@@ -91,6 +94,7 @@ export function MapView({
             onSelect={markersReact ? onSelect : undefined}
             interactive={markersReact}
             labelled={labelSelected && report.id === selectedId}
+            showVerification={showVerification}
           />
         ))}
         {pinPicking ? (
@@ -107,10 +111,12 @@ export function MapView({
 
       <div className={styles.overlay}>
         <ul className={styles.legend} aria-label="Legend">
+          {showVerification && <li><span className={styles.pendingKey} aria-hidden="true">?</span> Pending review</li>}
+          {showVerification && <li><span className={styles.rejectedKey} aria-hidden="true">×</span> Rejected</li>}
           {statuses.map((status) => (
             <li key={status}>
               <StatusDot status={status} />
-              {isPhone ? statusLabels[status].short : statusLabels[status].long}
+              {isPhone || showVerification ? statusLabels[status].short : statusLabels[status].long}
             </li>
           ))}
         </ul>

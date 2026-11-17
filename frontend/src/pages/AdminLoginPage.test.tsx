@@ -23,8 +23,8 @@ const currentPath = () => screen.getByTestId('location').textContent;
 function fakeApi() {
   const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
     if (url === '/api/admin/login') {
-      const { password } = JSON.parse(String(init?.body));
-      return password === 'right-password'
+      const { username, password } = JSON.parse(String(init?.body));
+      return username === 'facilities' && password === 'right-password'
         ? Response.json({ token: 'admin-token' })
         : Response.json(
             { error: { code: 'UNAUTHORIZED', message: 'Wrong password' } },
@@ -37,7 +37,8 @@ function fakeApi() {
   return fetchMock;
 }
 
-async function signIn(password: string) {
+async function signIn(password: string, username = 'facilities') {
+  fireEvent.change(screen.getByLabelText('Username'), { target: { value: username } });
   fireEvent.change(screen.getByLabelText('Password'), { target: { value: password } });
   fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
 }
@@ -65,7 +66,7 @@ describe('admin sign-in', () => {
 
     await signIn('guess');
 
-    expect((await screen.findByRole('alert')).textContent).toBe('Wrong password. Try again.');
+    expect((await screen.findByRole('alert')).textContent).toBe('Invalid username or password. Try again.');
     expect(screen.getByLabelText('Password').getAttribute('aria-invalid')).toBe('true');
     expect(currentPath()).toBe('/admin/login');
     expect(sessionStorage.getItem('sipkak.adminToken')).toBeNull();
@@ -77,7 +78,7 @@ describe('admin sign-in', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
 
-    expect(screen.getByRole('alert').textContent).toBe('Enter the admin password.');
+    expect(screen.getByRole('alert').textContent).toBe('Enter your username and password.');
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -114,5 +115,17 @@ describe('admin sign-in', () => {
 
     expect(currentPath()).toBe('/admin/login');
     expect(sessionStorage.getItem('sipkak.adminToken')).toBeNull();
+  });
+});
+
+
+describe('admin credential fields', () => {
+  it('requires a username as well as a password', async () => {
+    const fetchMock = fakeApi();
+    renderAt('/admin/login');
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'right-password' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    expect(screen.getByRole('alert').textContent).toBe('Enter your username and password.');
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

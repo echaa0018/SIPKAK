@@ -1,8 +1,6 @@
 const STORAGE_KEY = 'sipkak.adminToken';
 
-// SIMULATED: the admin token is the backend's fixed ADMIN_TOKEN, kept in sessionStorage so it
-// survives a refresh but not closing the tab. The real app would use a proper sign-in
-// (e.g. Supabase Auth) with short-lived tokens.
+// Signed, expiring session, scoped to one browser tab. The server validates it on every admin request.
 
 export function getAdminToken(): string | null {
   try {

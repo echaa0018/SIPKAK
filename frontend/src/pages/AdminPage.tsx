@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useMatch, useNavigate, useSearchParams } from 'react-router';
 import { AdminBottomNav } from '../components/AdminBottomNav';
 import { AdminReportDetail } from '../components/AdminReportDetail';
@@ -9,6 +9,8 @@ import { ReportSheet } from '../components/ReportSheet';
 import { StatusFilter, type StatusFilterValue } from '../components/StatusFilter';
 import { clearAdminToken, getAdminToken } from '../lib/adminSession';
 import { reportNumber } from '../lib/reportText';
+import { notifyReportsChanged } from '../lib/reportSync';
+import type { ReviewStatus } from '../api/reports';
 import { useIsDesktop } from '../lib/useIsDesktop';
 import { useReports } from '../lib/useReports';
 import styles from './AdminPage.module.css';
@@ -25,10 +27,17 @@ export function AdminPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const isDesktop = useIsDesktop();
-  const { reports, loading, error, reload } = useReports();
   // RequireAdmin only shows this page when there is a token.
   const token = getAdminToken() ?? '';
+  const { reports, loading, error, errorMessage, unauthorized, reload } = useReports(token);
+  useEffect(() => {
+    if (unauthorized) {
+      clearAdminToken();
+      navigate('/admin/login', { replace: true });
+    }
+  }, [unauthorized, navigate]);
   const [filter, setFilter] = useState<StatusFilterValue>('all');
+  const [reviewFilter, setReviewFilter] = useState<ReviewStatus | 'all'>('all');
   const [searchParams, setSearchParams] = useSearchParams();
 
   const detailMatch = useMatch('/admin/reports/:id');
@@ -41,8 +50,31 @@ export function AdminPage() {
   const selected = reports.find((r) => r.id === selectedId);
   const from: From = (location.state as { from?: From } | null)?.from ?? 'map';
 
-  // The filter applies to both the list and the map pins.
-  const shown = filter === 'all' ? reports : reports.filter((r) => r.status === filter);
+  // Verification is independent from the original repair status (waiting/in_progress/done).
+  const reviewed = reviewFilter === 'all' ? reports : reports.filter((r) => r.reviewStatus === reviewFilter);
+  const shown = reviewFilter !== 'approved' || filter === 'all'
+    ? reviewed : reviewed.filter((r) => r.status === filter);
+  const counts = {
+    all: reports.length,
+    pending: reports.filter((r) => r.reviewStatus === 'pending').length,
+    approved: reports.filter((r) => r.reviewStatus === 'approved').length,
+    rejected: reports.filter((r) => r.reviewStatus === 'rejected').length,
+  };
+  const verificationOptions = [
+    { value: 'all', label: 'All' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'approved', label: 'Approved' },
+    { value: 'rejected', label: 'Rejected' },
+  ] as const;
+  const reviewSwitch = <div className={styles.reviewSwitch} role="group" aria-label="Verification status">
+    {verificationOptions.map((option) => (
+      <button key={option.value} className={styles.reviewButton} type="button"
+        aria-pressed={reviewFilter === option.value}
+        onClick={() => { setReviewFilter(option.value); setFilter('all'); }}>
+        {option.label} ({counts[option.value]})
+      </button>
+    ))}
+  </div>;
 
   function signOut() {
     clearAdminToken();
@@ -60,9 +92,11 @@ export function AdminPage() {
   );
 
   const errorBar = error && (
-    <p className={styles.error} role="alert">
-      Couldn’t load the reports. Trying again…
-    </p>
+    <div className={styles.error} role="alert">
+      <strong>Could not load the admin reports.</strong>{' '}
+      {errorMessage ?? 'Check that the backend is running.'}{' '}
+      <button type="button" className={styles.retry} onClick={reload}>Retry now</button>
+    </div>
   );
 
   const detail = (report: NonNullable<typeof selected>, onClose?: () => void) => (
@@ -71,7 +105,7 @@ export function AdminPage() {
       report={report}
       token={token}
       onClose={onClose}
-      onSaved={reload}
+      onSaved={() => { reload(); notifyReportsChanged(); }}
       onUnauthorized={signOut}
       showPin={isDesktop}
     />
@@ -95,7 +129,8 @@ export function AdminPage() {
               <h1 className={styles.heading}>Reports</h1>
               <span className={styles.muted}>Newest first</span>
             </div>
-            <StatusFilter reports={reports} value={filter} onChange={setFilter} />
+            {reviewSwitch}
+            {reviewFilter === 'approved' && <StatusFilter reports={reviewed} value={filter} onChange={setFilter} />}
             <ReportList
               reports={shown}
               loading={loading}
@@ -103,7 +138,7 @@ export function AdminPage() {
               selectedId={selected?.id}
               variant="desktop"
               kind="admin"
-              empty="No reports with this status."
+              empty="No reports in this verification category."
             />
           </aside>
 
@@ -114,6 +149,7 @@ export function AdminPage() {
               selectedId={selected?.id}
               onSelect={select}
               labelSelected
+              showVerification
             />
           </section>
 
@@ -163,7 +199,8 @@ export function AdminPage() {
         {phoneView === 'map' && (
           <>
             <MapView
-              reports={reports}
+              reports={shown}
+              showVerification
               variant="phone"
               selectedId={selected?.id}
               onSelect={(id) => setSearchParams({ report: String(id) })}
@@ -180,7 +217,8 @@ export function AdminPage() {
 
         {phoneView === 'list' && (
           <div className={styles.phoneList}>
-            <StatusFilter reports={reports} value={filter} onChange={setFilter} />
+            {reviewSwitch}
+            {reviewFilter === 'approved' && <StatusFilter reports={reviewed} value={filter} onChange={setFilter} />}
             <ReportList
               reports={shown}
               loading={loading}
@@ -189,7 +227,7 @@ export function AdminPage() {
               }
               variant="phone"
               kind="admin"
-              empty="No reports with this status."
+              empty="No reports in this verification category."
             />
           </div>
         )}

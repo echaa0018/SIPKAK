@@ -45,7 +45,7 @@ describe('ReportSentDialog', () => {
         .getAllByRole('button')
         .map((b) => b.textContent),
     ).toEqual(['Close', 'See it in My reports']);
-    expect(dialog.textContent).toContain('notification here when');
+    expect(dialog.textContent).toContain('pending verification');
   });
 
   it('closes with Escape and keeps Tab inside', () => {

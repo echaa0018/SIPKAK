@@ -7,8 +7,10 @@ import {
   requireReporterId,
 } from '../lib/validation.js';
 import type { ReportService } from '../services/reports.js';
+import { limitSubmission } from '../services/submissionLimit.js';
+import type { Store } from '../store/store.js';
 
-export function reportsRouter(reports: ReportService) {
+export function reportsRouter(reports: ReportService, store: Store) {
   const router = Router();
 
   // X-Reporter-Id is optional on GET requests: it sets isMine, and ?mine=true needs it.
@@ -31,6 +33,7 @@ export function reportsRouter(reports: ReportService) {
   router.post('/reports', async (req, res) => {
     const reporterId = requireReporterId(req.get('X-Reporter-Id'));
     const input = createReportBody.parse(req.body);
+    await limitSubmission(store, req, reporterId);
     res.status(201).json(await reports.create(input, reporterId));
   });
 

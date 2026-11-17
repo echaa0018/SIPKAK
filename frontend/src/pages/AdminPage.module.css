@@ -144,3 +144,37 @@
   padding: 20px;
   color: var(--muted);
 }
+
+/* Small verification switch; the existing status filter remains unchanged. */
+.reviewSwitch {
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px;
+}
+.reviewButton {
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.reviewButton[aria-pressed="true"] {
+  border-color: var(--ink);
+  font-weight: 700;
+}
+
+.retry {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+@media (max-width: 1100px) {
+  .reviewSwitch { gap: 4px; flex-wrap: wrap; }
+  .reviewButton { padding: 7px 9px; font-size: 12px; }
+}

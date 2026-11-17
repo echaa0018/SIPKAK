@@ -38,16 +38,16 @@ export function ReportSheet({ report, onClose, onConfirmed, updateHref }: Report
 
       {updateHref ? (
         <div className={styles.status}>
-          <StatusLabel status={report.status} long />
+          {report.reviewStatus === 'approved' ? <StatusLabel status={report.status} long /> : <strong>{report.reviewStatus === 'pending' ? 'Pending verification' : 'Rejected'}</strong>}
           <Link to={updateHref} className={styles.primary}>
-            Update status
+            {report.reviewStatus === 'pending' ? 'Review report' : report.reviewStatus === 'rejected' ? 'View rejection' : 'Update status'}
           </Link>
         </div>
       ) : (
         <>
           <div className={styles.status}>
             <div>
-              <StatusLabel status={report.status} long />
+              {report.reviewStatus === 'approved' ? <StatusLabel status={report.status} long /> : <strong>{report.reviewStatus === 'pending' ? 'Pending verification' : 'Rejected'}</strong>}
               <p className={styles.muted}>{confirmationsText(report.confirmations)}</p>
             </div>
             <ConfirmButton

@@ -43,6 +43,7 @@ export function makeReport(overrides: Partial<Report> = {}): Report {
     accuracyM: 12,
     photo: null,
     status: 'in_progress',
+    reviewStatus: 'approved',
     note: 'Technician scheduled for 12/11/2026.',
     confirmations: 3,
     isMine: false,

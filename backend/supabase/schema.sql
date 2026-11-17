@@ -14,6 +14,7 @@ create table if not exists reports (
   lng           double precision not null,
   accuracy_m    double precision not null default 12,
   photo         text,  -- SIMULATED: a JPEG data URL; the real app would store a Storage URL
+  review_status text not null default 'approved' check (review_status in ('pending','approved','rejected')),
   status        text not null default 'waiting'
                   check (status in ('waiting', 'in_progress', 'done')),
   note          text,
@@ -22,6 +23,12 @@ create table if not exists reports (
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
 );
+
+-- Existing reports predate moderation and must remain visible; new reports are inserted pending.
+alter table reports add column if not exists review_status text not null default 'approved';
+alter table reports drop constraint if exists reports_review_status_check;
+alter table reports add constraint reports_review_status_check
+  check (review_status in ('pending', 'approved', 'rejected'));
 
 create index if not exists reports_created_at_idx on reports (created_at desc);
 create index if not exists reports_reporter_id_idx on reports (reporter_id);

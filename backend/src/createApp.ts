@@ -19,7 +19,7 @@ export function createApp(store: Store = createStore()) {
   // The photo (up to 10 MB) travels inside the JSON body, plus 1 MB for the other fields.
   app.use(express.json({ limit: '11mb' }));
   app.use('/api', metaRouter(store.kind));
-  app.use('/api', reportsRouter(reports));
+  app.use('/api', reportsRouter(reports, store));
   app.use('/api', notificationsRouter(notifications));
   app.use('/api', adminRouter(reports));
 

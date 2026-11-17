@@ -67,6 +67,7 @@ describe('admin dashboard', () => {
     renderAdmin();
     await within(list()).findByText('Cracked paving by the main gate');
 
+    fireEvent.click(screen.getByRole('button', { name: 'Approved (8)' }));
     const filter = screen.getByRole('group', { name: 'Show reports' });
     expect(
       within(filter)
@@ -87,6 +88,7 @@ describe('admin dashboard', () => {
     const container = renderAdmin();
     await within(list()).findByText('Cracked paving by the main gate');
 
+    fireEvent.click(screen.getByRole('button', { name: 'Approved (8)' }));
     fireEvent.click(screen.getByRole('button', { name: 'Done 2' }));
 
     expect(screen.getByRole('button', { name: 'Done 2' }).getAttribute('aria-pressed')).toBe(
@@ -161,7 +163,35 @@ describe('updating a report', () => {
       'Saved. The reporter will see this in Notifications.',
     );
     expect(await within(details).findByText('Crew booked for Friday.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Approved (8)' }));
     expect(screen.getByRole('button', { name: 'In progress 3' })).toBeTruthy();
     expect(markers(container)).toContain('Cracked paving by the main gate, In progress');
+  });
+});
+
+
+describe('verification independent from original repair states', () => {
+  it('keeps pending and rejected separate from approved and from repair filters', async () => {
+    const mixed = [
+      makeReport({ id: 149, description: 'New report awaiting review', reviewStatus: 'pending', status: 'waiting' }),
+      makeReport({ id: 148, description: 'Invalid report previously rejected', reviewStatus: 'rejected', status: 'waiting' }),
+      makeReport({ id: 147, description: 'Accepted repair report', reviewStatus: 'approved', status: 'in_progress' }),
+    ];
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ reports: mixed })));
+    const container = renderAdmin();
+    await within(list()).findByText('New report awaiting review');
+    expect(screen.getByRole('button', { name: 'Pending (1)' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Approved (1)' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Rejected (1)' })).toBeTruthy();
+    expect(markers(container)).toContain('New report awaiting review, Pending verification');
+    expect(markers(container)).toContain('Invalid report previously rejected, Rejected');
+    fireEvent.click(screen.getByRole('button', { name: 'Pending (1)' }));
+    expect(rows()).toHaveLength(1);
+    expect(screen.queryByRole('group', { name: 'Show reports' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Rejected (1)' }));
+    expect(rows()).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Approved (1)' }));
+    expect(rows()).toHaveLength(1);
+    expect(screen.getByRole('button', { name: 'In progress 1' })).toBeTruthy();
   });
 });

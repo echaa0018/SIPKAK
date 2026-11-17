@@ -1,15 +1,20 @@
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../src/createApp.js';
+import { login } from '../src/services/admin.js';
 import { demoReporterId } from '../src/data/seed.js';
 
-const token = 'test-token';
+let token: string;
 const newReporter = '44444444-4444-4444-8444-444444444444';
 
 let app: ReturnType<typeof createApp>;
 
 beforeEach(() => {
-  vi.stubEnv('ADMIN_TOKEN', token);
+  vi.stubEnv('ADMIN_USERS_JSON', '');
+  vi.stubEnv('ADMIN_USERNAME', 'admin');
+  vi.stubEnv('ADMIN_PASSWORD', 'test-password');
+  vi.stubEnv('ADMIN_SESSION_SECRET', 'notify-test-signing-secret');
+  token = login('admin', 'test-password');
   app = createApp();
 });
 

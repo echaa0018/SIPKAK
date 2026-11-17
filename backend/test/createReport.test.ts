@@ -37,6 +37,7 @@ describe('POST /api/reports', () => {
       ...validReport,
       accuracyM: 12,
       status: 'waiting',
+      reviewStatus: 'pending',
       note: null,
       confirmations: 0,
       isMine: true,
@@ -46,13 +47,14 @@ describe('POST /api/reports', () => {
     expect(res.body).not.toHaveProperty('reporterId');
   });
 
-  it('puts the new report first in the list and under mine', async () => {
+  it('keeps new reports private until review, but shows them under mine', async () => {
     await post(validReport);
     const second = await post(validReport);
 
     expect(second.body.id).toBe(147);
     const all = await request(app).get('/api/reports');
-    expect(all.body.reports[0].id).toBe(147);
+    expect(all.body.reports.map((r: { id: number }) => r.id)).not.toContain(147);
+    expect(all.body.reports.map((r: { id: number }) => r.id)).not.toContain(146);
     const mine = await request(app).get('/api/reports?mine=true').set('X-Reporter-Id', reporterId);
     expect(mine.body.reports.map((r: { id: number }) => r.id)).toEqual([147, 146]);
   });

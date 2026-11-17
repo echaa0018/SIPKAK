@@ -1,6 +1,7 @@
 import { createClient, type PostgrestError } from '@supabase/supabase-js';
 import type {
   ReportFilter,
+  ReviewStatus,
   ReportStatus,
   StatusChange,
   Store,
@@ -19,6 +20,7 @@ interface ReportRow {
   accuracy_m: number;
   photo: string | null;
   status: ReportStatus;
+  review_status: ReviewStatus;
   note: string | null;
   confirmations: number;
   reporter_id: string;
@@ -55,6 +57,7 @@ function toReport(row: ReportRow): StoredReport {
     accuracyM: row.accuracy_m,
     photo: row.photo,
     status: row.status,
+    reviewStatus: row.review_status,
     note: row.note,
     confirmations: row.confirmations,
     reporterId: row.reporter_id,
@@ -120,6 +123,21 @@ export function createSupabaseStore(url: string, secretKey: string): Store {
 
     getReport,
 
+    async allowSubmission(sourceHash, reporterHash) {
+      const accepted = check(await db.rpc('reserve_submission', {
+        p_source_hash: sourceHash, p_reporter_hash: reporterHash,
+      })) as boolean;
+      return accepted;
+    },
+
+    async reviewReport(id, reviewStatus, note, at) {
+      const row = check(await db.from('reports')
+        .update({ review_status: reviewStatus, updated_at: at, ...(note !== null && { note }) })
+        .eq('id', id).eq('review_status', 'pending').select('id'));
+      if (!row || row.length === 0) return undefined;
+      return getReport(id);
+    },
+
     async createReport({ history, ...report }) {
       const { id } = check(
         await db
@@ -133,6 +151,7 @@ export function createSupabaseStore(url: string, secretKey: string): Store {
             accuracy_m: report.accuracyM,
             photo: report.photo,
             status: report.status,
+            review_status: report.reviewStatus,
             note: report.note,
             confirmations: report.confirmations,
             reporter_id: report.reporterId,

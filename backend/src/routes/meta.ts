@@ -6,7 +6,7 @@ export function metaRouter(storeKind: Store['kind']) {
   const router = Router();
 
   router.get('/health', (_req, res) => {
-    res.json({ ok: true, store: storeKind });
+    res.json({ ok: true, store: storeKind, edition: 'verification-sync' });
   });
 
   router.get('/buildings', (_req, res) => {

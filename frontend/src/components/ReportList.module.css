@@ -114,3 +114,5 @@
   color: var(--muted);
   font-size: 13px;
 }
+
+.reviewInfo { font-size: 12px; color: var(--muted); font-weight: 600; }

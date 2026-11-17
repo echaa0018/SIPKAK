@@ -60,6 +60,7 @@ function nearestBuilding(pin: LatLng | null, buildings: Building[]): string {
 function errorsFromApi(error: unknown): Errors {
   if (!(error instanceof ApiError)) return { form: 'Couldn’t send the report. Try again.' };
   if (error.code === 'PAYLOAD_TOO_LARGE') return { photo: 'This photo is too large.' };
+  if (error.code === 'RATE_LIMITED') return { form: error.message };
   if (error.code !== 'VALIDATION_ERROR') {
     return {
       form: error.code === 'NETWORK' ? error.message : 'Couldn’t send the report. Try again.',

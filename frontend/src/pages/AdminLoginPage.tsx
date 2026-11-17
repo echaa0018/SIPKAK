@@ -5,11 +5,12 @@ import { ApiError } from '../api/client';
 import { getAdminToken, setAdminToken } from '../lib/adminSession';
 import styles from './AdminLoginPage.module.css';
 
-/** /admin/login: the facilities team signs in with the shared admin password. */
+/** /admin/login: facility administrators sign in with their own username and password. */
 export function AdminLoginPage() {
   const id = useId();
   const navigate = useNavigate();
   const location = useLocation();
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [signingIn, setSigningIn] = useState(false);
@@ -21,19 +22,19 @@ export function AdminLoginPage() {
 
   async function signIn(event: FormEvent) {
     event.preventDefault();
-    if (!password) {
-      setError('Enter the admin password.');
+    if (!username.trim() || !password) {
+      setError('Enter your username and password.');
       return;
     }
     setSigningIn(true);
     setError(null);
     try {
-      setAdminToken(await adminLogin(password));
+      setAdminToken(await adminLogin(username.trim(), password));
       navigate(from, { replace: true });
     } catch (e) {
       setError(
         e instanceof ApiError && e.status === 401
-          ? 'Wrong password. Try again.'
+          ? 'Invalid username or password. Try again.'
           : 'Couldn’t sign in. Check your connection and try again.',
       );
       setSigningIn(false);
@@ -51,7 +52,22 @@ export function AdminLoginPage() {
         </h1>
 
         <div className={styles.field}>
+          <label className={styles.label} htmlFor={`${id}-username`}>
+            Username
+          </label>
+          <input
+            id={`${id}-username`}
+            className={styles.input}
+            type="text"
+            autoComplete="username"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            aria-invalid={error ? true : undefined}
+          />
+        </div>
+        <div className={styles.field}>
           <label className={styles.label} htmlFor={`${id}-password`}>
+
             Password
           </label>
           <input

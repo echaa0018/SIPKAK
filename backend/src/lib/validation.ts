@@ -65,6 +65,7 @@ export const markReadBody = z.object({
 
 // POST /api/admin/login
 export const loginBody = z.object({
+  username: z.string({ error: 'Required' }).trim().min(1, 'Required'),
   password: z.string({ error: 'Required' }).min(1, 'Required'),
 });
 
@@ -85,6 +86,11 @@ export const updateReportBody = z
   });
 
 export type UpdateReportInput = z.infer<typeof updateReportBody>;
+
+export const reviewReportBody = z.discriminatedUnion('decision', [
+  z.object({ decision: z.literal('approved') }),
+  z.object({ decision: z.literal('rejected'), reason: z.string().trim().min(5).max(500) }),
+]);
 
 /** Reads the X-Reporter-Id header where it is required. */
 export function requireReporterId(value: string | undefined): string {

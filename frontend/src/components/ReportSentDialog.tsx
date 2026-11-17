@@ -48,8 +48,7 @@ export function ReportSentDialog({ report, variant, onClose, onSeeMine }: Report
         {reportNumber(report.id)} · {formatWib(report.createdAt)}
       </p>
       <p className={styles.text} id={`${id}-text`}>
-        It&apos;s on the campus map now. You&apos;ll get a notification
-        {isPhone ? '' : ' here'} when the facilities team updates it.
+        Your report is pending verification and is visible only in My reports. You&apos;ll get a notification when the facilities team reviews it.
       </p>
       {/* The phone stacks the buttons with the main one on top; desktop puts it on the right. */}
       <div className={isPhone ? styles.stacked : styles.inline}>

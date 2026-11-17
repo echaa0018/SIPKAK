@@ -22,6 +22,7 @@ const viewByPath: Record<string, ReporterView> = {
 export interface LayoutProps {
   view: ReporterView;
   reports: Report[];
+  mineReports: Report[];
   loading: boolean;
   loadError: boolean;
   /** The report in the URL (?report=142), if any. */
@@ -43,16 +44,18 @@ export function ReporterShell() {
   const navigate = useNavigate();
   const isDesktop = useIsDesktop();
   const view = viewByPath[pathname] ?? 'map';
-  const { reports, loading, error, reload } = useReports();
+  const { reports, mineReports, loading, error, reload } = useReports();
 
   // The selected report lives in the URL, so it survives a reload and can be shared.
   const selectedId = Number(searchParams.get('report'));
-  const selected = reports.find((report) => report.id === selectedId);
+  const selected = [...reports, ...mineReports].find((report) => report.id === selectedId);
 
   // On the phone a selected report always opens on the map. On desktop the left tab stays,
   // except on the form, where the right pane is taken.
   const onSelect = (id: number) => {
-    const target = isDesktop && view !== 'new' ? pathname : '/';
+    // A private pending/rejected report must open in My reports, not as a map marker.
+    const privateReport = mineReports.find((r) => r.id === id && r.reviewStatus !== 'approved');
+    const target = !isDesktop && privateReport ? '/mine' : isDesktop && view !== 'new' ? pathname : '/';
     navigate({ pathname: target, search: `?report=${id}` });
   };
   const onCloseSelected = () => navigate({ pathname, search: '' });
@@ -68,6 +71,7 @@ export function ReporterShell() {
     <Layout
       view={view}
       reports={reports}
+      mineReports={mineReports}
       loading={loading}
       loadError={error}
       selected={selected}

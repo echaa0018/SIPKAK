@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router';
+import { Link, NavLink, useNavigate } from 'react-router';
 import type { Report } from '../api/reports';
 import { campusCenter } from '../lib/campusMap';
 import type { LatLng } from '../lib/geo';
 import { BottomNav } from './BottomNav';
+import { notifyReportsChanged } from '../lib/reportSync';
+import { LockIcon } from './icons';
 import { MapView } from './MapView';
 import { MyReportsList } from './MyReportsList';
 import { NewReportForm } from './NewReportForm';
@@ -26,7 +28,7 @@ const plural = (n: number) => (n === 1 ? '1 report' : `${n} reports`);
 
 /** Phone layout: a top bar, one screen, and the bottom nav. */
 export function PhoneLayout(props: LayoutProps) {
-  const { view, reports, loading, loadError, selected, onSelect, onCloseSelected, reload } = props;
+  const { view, reports, mineReports, loading, loadError, selected, onSelect, onCloseSelected, reload } = props;
   const { notifications, unread, onOpenNotification } = props;
   const title = titles[view];
   // The form's pin starts in the middle of campus; drag the map or use your location to move it.
@@ -38,23 +40,28 @@ export function PhoneLayout(props: LayoutProps) {
   return (
     <div className={styles.layout}>
       <header className={styles.topBar}>
-        {title ? (
-          <h1 className={styles.title}>{title}</h1>
-        ) : (
-          <>
-            <p className={styles.brand}>
-              <strong>SIPKAK</strong> <span>ITB Ganesha</span>
-            </p>
-            <nav className={styles.switch} aria-label="Show reports as">
-              <NavLink to="/" end className={styles.switchItem}>
-                Map
-              </NavLink>
-              <NavLink to="/list" className={styles.switchItem}>
-                List
-              </NavLink>
-            </nav>
-          </>
-        )}
+        <div className={styles.headerContent}>
+          {title ? (
+            <h1 className={styles.title}>{title}</h1>
+          ) : (
+            <>
+              <p className={styles.brand}>
+                <strong>SIPKAK</strong> <span>ITB Ganesha</span>
+              </p>
+              <nav className={styles.switch} aria-label="Show reports as">
+                <NavLink to="/" end className={styles.switchItem}>
+                  Map
+                </NavLink>
+                <NavLink to="/list" className={styles.switchItem}>
+                  List
+                </NavLink>
+              </nav>
+            </>
+          )}
+        </div>
+        <Link to="/admin" className={styles.adminEntry}>
+          <LockIcon size={16} /> Admin
+        </Link>
       </header>
 
       {loadError && (
@@ -93,14 +100,20 @@ export function PhoneLayout(props: LayoutProps) {
             onPinChange={setPin}
             reports={reports}
             onSent={(report) => {
-              reload(); // so the new marker is on the map behind the pop-up
+              reload(); // only approved reports appear on the public map
+              notifyReportsChanged(); // notify admin tabs immediately
               setSent(report);
             }}
             onConfirmed={reload}
           />
         )}
         {view === 'mine' && (
-          <MyReportsList reports={reports} loading={loading} onSelect={onSelect} variant="phone" />
+          <>
+            <MyReportsList reports={mineReports} loading={loading} onSelect={onSelect} variant="phone" />
+            {selected?.isMine && (
+              <ReportSheet report={selected} onClose={onCloseSelected} onConfirmed={reload} />
+            )}
+          </>
         )}
         {view === 'notifications' && (
           <NotificationList
@@ -119,7 +132,7 @@ export function PhoneLayout(props: LayoutProps) {
           variant="phone"
           onClose={() => {
             setSent(null);
-            onSelect(sent.id); // back to the map, with the new report open
+            navigate('/'); // back to public map; My reports is the private view
           }}
           onSeeMine={() => {
             setSent(null);

@@ -5,7 +5,7 @@ import { hasConfirmed, rememberConfirmed } from '../lib/confirmed';
 import styles from './ConfirmButton.module.css';
 
 interface ConfirmButtonProps {
-  report: Pick<Report, 'id' | 'isMine'>;
+  report: Pick<Report, 'id' | 'isMine' | 'reviewStatus'>;
   /** Called after a successful +1, so the caller can reload the count. */
   onConfirmed: () => void;
   label?: string;
@@ -24,7 +24,7 @@ export function ConfirmButton({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (report.isMine) return null;
+  if (report.isMine || report.reviewStatus !== 'approved') return null;
 
   async function confirm() {
     setSending(true);

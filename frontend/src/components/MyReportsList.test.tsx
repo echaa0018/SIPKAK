@@ -42,13 +42,14 @@ describe('MyReportsList', () => {
     ]);
   });
 
-  it('shows "Sent <date>" and the full status on the phone', () => {
+  it('shows "Sent <date>" and a separate verification state on the phone', () => {
     renderList('phone');
 
     expect(screen.getByText('Saved on this phone · no account needed')).toBeTruthy();
     const tap = rows()[2];
     expect(within(tap).getByText('Sent 21/10/2026 · 10:05 WIB')).toBeTruthy();
-    expect(within(tap).getByText('Waiting for review')).toBeTruthy();
+    expect(within(tap).getByText('Waiting')).toBeTruthy();
+    expect(within(tap).getByText('· Approved')).toBeTruthy();
     expect(within(rows()[1]).getByText('In progress')).toBeTruthy();
     expect(screen.queryByText('Sent by you')).toBeNull();
   });

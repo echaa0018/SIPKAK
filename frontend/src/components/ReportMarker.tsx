@@ -17,6 +17,7 @@ interface ReportMarkerProps {
   interactive?: boolean;
   /** Shows the description in a dark label above the marker (the admin map's selected pin). */
   labelled?: boolean;
+  showVerification?: boolean;
 }
 
 /** One report on the map, drawn with CSS in its status style. */
@@ -26,9 +27,14 @@ export function ReportMarker({
   onSelect,
   interactive = true,
   labelled = false,
+  showVerification = false,
 }: ReportMarkerProps) {
   const markerRef = useRef<L.Marker>(null);
-  const label = `${report.description}, ${statusLabels[report.status].long}`;
+  const verification = showVerification && report.reviewStatus !== 'approved'
+    ? report.reviewStatus : null;
+  const label = verification
+    ? `${report.description}, ${verification === 'pending' ? 'Pending verification' : 'Rejected'}`
+    : `${report.description}, ${showVerification ? statusLabels[report.status].short : statusLabels[report.status].long}`;
 
   // A divIcon (HTML + CSS) instead of Leaflet's default PNG pin. The 44 px box is the tap target;
   // the visible dot inside it is smaller.
@@ -36,12 +42,12 @@ export function ReportMarker({
     () =>
       L.divIcon({
         className: `${styles.hitArea} ${selected ? styles.selected : ''}`,
-        html: `<span class="${styles.marker} ${styles[report.status]}">${
-          report.status === 'done' ? checkSvg : ''
-        }</span>`,
+        html: verification
+          ? `<span class="${styles.marker} ${styles[verification]}">${verification === 'pending' ? '?' : '×'}</span>`
+          : `<span class="${styles.marker} ${styles[report.status]}">${report.status === 'done' ? checkSvg : ''}</span>`,
         iconSize: [44, 44],
       }),
-    [report.status, selected],
+    [report.status, selected, verification],
   );
 
   // Leaflet makes the marker a focusable role="button"; give it a name screen readers can read.

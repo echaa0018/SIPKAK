@@ -48,6 +48,10 @@ export function ReportList({
 
   const showPhoto = isPhone && kind !== 'admin';
   const showNumber = !isPhone && kind === 'admin';
+  const showReview = kind === 'admin' || kind === 'mine';
+  const state = (report: Report) => report.reviewStatus === 'approved'
+    ? <><StatusLabel status={report.status} />{showReview && <span className={styles.reviewInfo}>· Approved</span>}</>
+    : <strong className={styles.reviewInfo}>{report.reviewStatus === 'pending' ? 'Pending verification' : 'Rejected'}</strong>;
 
   return (
     <section className={styles.section}>
@@ -75,13 +79,13 @@ export function ReportList({
                   <>
                     <span className={styles.muted}>Sent {formatWib(report.createdAt)}</span>
                     <span className={styles.statusLine}>
-                      <StatusLabel status={report.status} long />
+                      {state(report)}
                     </span>
                   </>
                 ) : (
                   <span className={styles.dateLine}>
                     <span className={styles.muted}>{formatWib(report.createdAt)}</span>
-                    <StatusLabel status={report.status} />
+                    {state(report)}
                   </span>
                 )}
                 {isPhone && kind === 'all' && report.isMine && (
